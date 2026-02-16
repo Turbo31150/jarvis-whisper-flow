@@ -24,6 +24,10 @@ from .skills.process_manager import ProcessManagerSkill
 from .skills.network_control import NetworkControlSkill
 from .skills.power_display import PowerDisplaySkill
 from .skills.software_manager import SoftwareManagerSkill
+from .skills.timer_reminder import TimerReminderSkill
+from .skills.quick_notes import QuickNotesSkill
+from .skills.calculator import CalculatorSkill
+from .skills.virtual_desktop import VirtualDesktopSkill
 
 # Agents
 from .agents.dictation_agent import DictationAgent
@@ -56,6 +60,10 @@ class Jarvis:
         self.network = NetworkControlSkill()
         self.power_display = PowerDisplaySkill()
         self.software = SoftwareManagerSkill()
+        self.timer = TimerReminderSkill()
+        self.notes = QuickNotesSkill()
+        self.calculator = CalculatorSkill()
+        self.vdesktop = VirtualDesktopSkill()
 
         # Agents
         self.dictation = DictationAgent()
@@ -173,6 +181,30 @@ class Jarvis:
         c.register("dictation_stop", self.dictation.stop)
         c.register("dictation_newline", self.dictation.newline)
         c.register("dictation_period", self.dictation.period)
+
+        # Minuteurs & Rappels
+        c.register("timer_set", self.timer.set_timer)
+        c.register("timer_reminder", self.timer.set_reminder)
+        c.register("timer_cancel", self.timer.cancel_timer)
+        c.register("timer_list", self.timer.list_timers)
+
+        # Notes rapides
+        c.register("note_add", self.notes.add_note)
+        c.register("note_read", self.notes.read_notes)
+        c.register("note_clear", self.notes.clear_notes)
+        c.register("note_search", self.notes.search_notes)
+
+        # Calculatrice
+        c.register("calc_compute", self.calculator.calculate)
+        c.register("calc_percentage", self.calculator.percentage)
+        c.register("calc_convert", self.calculator.convert_temperature)
+
+        # Bureaux virtuels
+        c.register("vdesktop_new", self.vdesktop.new_desktop)
+        c.register("vdesktop_close", self.vdesktop.close_desktop)
+        c.register("vdesktop_left", self.vdesktop.switch_left)
+        c.register("vdesktop_right", self.vdesktop.switch_right)
+        c.register("vdesktop_task_view", self.vdesktop.task_view)
 
         # Automatisation
         c.register("automation_create", self.automation.create)

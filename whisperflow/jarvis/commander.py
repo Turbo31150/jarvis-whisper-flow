@@ -43,8 +43,20 @@ COMMAND_PATTERNS = [
      "dictation_stop"),
     (r"(?:nouvelle\s+ligne|new\s+line|à\s+la\s+ligne|retour\s+à\s+la\s+ligne)",
      "dictation_newline"),
-    (r"(?:point\s+final|point\s*$)",
+    (r"(?:\bpoint\s+final\b|\bpoint\s*$)",
      "dictation_period"),
+
+    # === BUREAUX VIRTUELS (avant média car "suivant/précédent" conflicte) ===
+    (r"(?:nouveau\s+bureau\s+virtuel|new\s+desktop|cr[ée]+\s+un\s+bureau)",
+     "vdesktop_new"),
+    (r"(?:ferme\s+(?:le\s+)?bureau\s+virtuel|close\s+desktop)",
+     "vdesktop_close"),
+    (r"(?:bureau\s+virtuel\s+(?:pr[ée]c[ée]dent|gauche)|desktop\s+left)",
+     "vdesktop_left"),
+    (r"(?:bureau\s+virtuel\s+(?:suivant|droite)|desktop\s+right)",
+     "vdesktop_right"),
+    (r"(?:vue\s+des?\s+t[âa]ches|task\s+view)",
+     "vdesktop_task_view"),
 
     # === MÉDIA (avant app_close car "arrête la musique" conflicte) ===
     (r"(?:arrête\s+la\s+musique|arrête\s+la\s+lecture)",
@@ -63,7 +75,7 @@ COMMAND_PATTERNS = [
      "process_list"),
     (r"(?:tue|tuer|kill)\s+(?:le\s+)?(?:processus|process)\s+(.+)",
      "process_kill"),
-    (r"(?:ressources|resources|charge|utilisation)\s*(?:système|system)?",
+    (r"(?:ressources|resources|\bcharge\b|utilisation)\s*(?:système|system)?",
      "system_resources"),
     (r"(?:utilisation\s+(?:cpu|ram|système|system))",
      "system_resources"),
@@ -160,11 +172,39 @@ COMMAND_PATTERNS = [
     (r"(?:météo|weather|temps\s+qu'il\s+fait)",
      "web_weather"),
 
+    # === MINUTEUR & RAPPELS (avant app_launch) ===
+    (r"(?:minuteur|timer|chrono(?:m[èe]tre)?)\s+(.+)",
+     "timer_set"),
+    (r"(?:rappelle[\s-]moi|reminder|rappel)\s+(?:dans\s+)?(.+)",
+     "timer_reminder"),
+    (r"(?:annule|cancel)\s+(?:le\s+)?(?:minuteur|timer|chrono|rappel)",
+     "timer_cancel"),
+    (r"(?:liste\s+(?:les\s+)?(?:minuteurs|timers|rappels)|timers?\s+actifs?)",
+     "timer_list"),
+
+    # === NOTES RAPIDES ===
+    (r"(?:note|noter|prends?\s+(?:en\s+)?note)\s+(.+)",
+     "note_add"),
+    (r"(?:lis|lire)\s+(?:les\s+)?notes",
+     "note_read"),
+    (r"(?:efface|supprime|clear)\s+(?:les\s+)?notes",
+     "note_clear"),
+    (r"(?:cherche|search)\s+(?:dans\s+)?(?:les\s+)?notes\s+(.+)",
+     "note_search"),
+
+    # === CALCULATRICE ===
+    (r"(?:calcule|calculer|calculate|combien\s+fait)\s+(.+)",
+     "calc_compute"),
+    (r"(\d+)\s*(?:pourcent|%|percent)\s+(?:de|of)\s+(\d+)",
+     "calc_percentage"),
+    (r"(?:convertis?|conversion?|convert)\s+(.+)",
+     "calc_convert"),
+
     # === AUTOMATISATION (avant app_launch car "lance macro" conflicte) ===
-    (r"(?:automatise|automatiser|automate|macro)\s+(.+)",
-     "automation_create"),
     (r"(?:exécute|exécuter|run|lance)\s+(?:la\s+)?(?:macro|automatisation|script)\s+(.+)",
      "automation_run"),
+    (r"(?:automatise|automatiser|automate|macro)\s+(.+)",
+     "automation_create"),
 
     # === APPLICATIONS (générique - après tous les patterns spécifiques) ===
     (r"(?:ouvre|ouvrir|lance|lancer|démarre|démarrer|start|open|launch)\s+(.+)",
