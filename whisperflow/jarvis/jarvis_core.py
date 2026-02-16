@@ -28,6 +28,10 @@ from .skills.timer_reminder import TimerReminderSkill
 from .skills.quick_notes import QuickNotesSkill
 from .skills.calculator import CalculatorSkill
 from .skills.virtual_desktop import VirtualDesktopSkill
+from .skills.translator import TranslatorSkill
+from .skills.unit_converter import UnitConverterSkill
+from .skills.pomodoro import PomodoroSkill
+from .skills.system_snapshot import SystemSnapshotSkill
 
 # Agents
 from .agents.dictation_agent import DictationAgent
@@ -64,6 +68,10 @@ class Jarvis:
         self.notes = QuickNotesSkill()
         self.calculator = CalculatorSkill()
         self.vdesktop = VirtualDesktopSkill()
+        self.translator = TranslatorSkill()
+        self.unit_converter = UnitConverterSkill()
+        self.pomodoro = PomodoroSkill()
+        self.snapshot = SystemSnapshotSkill()
 
         # Agents
         self.dictation = DictationAgent()
@@ -205,6 +213,24 @@ class Jarvis:
         c.register("vdesktop_left", self.vdesktop.switch_left)
         c.register("vdesktop_right", self.vdesktop.switch_right)
         c.register("vdesktop_task_view", self.vdesktop.task_view)
+
+        # Traduction
+        c.register("translate_fr_en", self.translator.translate_fr_en)
+        c.register("translate_en_fr", self.translator.translate_en_fr)
+        c.register("translate_lookup", self.translator.lookup)
+
+        # Conversion d'unités
+        c.register("unit_convert", self.unit_converter.convert)
+
+        # Pomodoro
+        c.register("pomodoro_start", self.pomodoro.start)
+        c.register("pomodoro_stop", self.pomodoro.stop)
+        c.register("pomodoro_status", self.pomodoro.status)
+
+        # Snapshot système
+        c.register("snapshot_take", self.snapshot.take_snapshot)
+        c.register("snapshot_compare", self.snapshot.compare)
+        c.register("snapshot_history", self.snapshot.history)
 
         # Automatisation
         c.register("automation_create", self.automation.create)

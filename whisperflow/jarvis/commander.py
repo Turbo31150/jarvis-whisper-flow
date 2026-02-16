@@ -67,7 +67,7 @@ COMMAND_PATTERNS = [
      "media_pause"),
     (r"(?:suivant|next|piste\s+suivante|chanson\s+suivante)",
      "media_next"),
-    (r"(?:précédent|previous|piste\s+précédente|chanson\s+précédente)",
+    (r"(?:\bprécédent\b|previous|piste\s+précédente|chanson\s+précédente)",
      "media_previous"),
 
     # === PROCESSUS & MONITORING (avant app_launch car "liste/kill" conflicte) ===
@@ -192,6 +192,10 @@ COMMAND_PATTERNS = [
     (r"(?:cherche|search)\s+(?:dans\s+)?(?:les\s+)?notes\s+(.+)",
      "note_search"),
 
+    # === CONVERSION D'UNITES (avant calc_convert car "convertis X en Y" conflicte) ===
+    (r"(?:convertis?|conversion?|convert)\s+(\d+(?:[.,]\d+)?)\s*([a-zéèêàâôûïü-]+)\s+(?:en|to|vers)\s+([a-zéèêàâôûïü-]+)",
+     "unit_convert"),
+
     # === CALCULATRICE ===
     (r"(?:calcule|calculer|calculate|combien\s+fait)\s+(.+)",
      "calc_compute"),
@@ -199,6 +203,34 @@ COMMAND_PATTERNS = [
      "calc_percentage"),
     (r"(?:convertis?|conversion?|convert)\s+(.+)",
      "calc_convert"),
+
+    # === TRADUCTION (avant app_launch) ===
+    (r"(?:traduis?|traduire|translate)\s+en\s+anglais\s+(.+)",
+     "translate_fr_en"),
+    (r"(?:traduis?|traduire|translate)\s+en\s+fran[çc]ais\s+(.+)",
+     "translate_en_fr"),
+    (r"(?:traduis?|traduire|translate)\s+(.+)\s+en\s+anglais",
+     "translate_fr_en"),
+    (r"(?:traduis?|traduire|translate)\s+(.+)\s+en\s+fran[çc]ais",
+     "translate_en_fr"),
+    (r"(?:traduction|translation)\s+(?:de\s+)?(.+)",
+     "translate_lookup"),
+
+    # === POMODORO (stop/status AVANT start car "pomodoro" nu dans start matche tout) ===
+    (r"(?:arrête\s+(?:le\s+)?pomodoro|stop\s+pomodoro|fin\s+(?:du\s+)?pomodoro)",
+     "pomodoro_stop"),
+    (r"(?:état\s+(?:du\s+)?pomodoro|pomodoro\s+status|où\s+en\s+est\s+le\s+pomodoro|status\s+pomodoro)",
+     "pomodoro_status"),
+    (r"(?:pomodoro|lance\s+(?:un\s+)?pomodoro|technique\s+pomodoro|mode\s+travail)",
+     "pomodoro_start"),
+
+    # === SNAPSHOT SYSTEME ===
+    (r"(?:snapshot\s+(?:du\s+)?système|capture\s+(?:du\s+)?système|état\s+complet|system\s+snapshot|bilan\s+système)",
+     "snapshot_take"),
+    (r"(?:compare\s+(?:les\s+)?snapshots?|comparaison\s+système|diff\s+système)",
+     "snapshot_compare"),
+    (r"(?:historique\s+(?:des\s+)?snapshots?|snapshots?\s+précédents?)",
+     "snapshot_history"),
 
     # === AUTOMATISATION (avant app_launch car "lance macro" conflicte) ===
     (r"(?:exécute|exécuter|run|lance)\s+(?:l[ea]\s+)?(?:macro|automatisation|script)\s+(.+)",
