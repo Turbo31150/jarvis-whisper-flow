@@ -145,7 +145,7 @@ COMMAND_PATTERNS = [
      "clipboard_read"),
     (r"(?:coupe\s+le\s+son)",
      "system_mute"),
-    (r"(?:coupe|couper|cut)\s*(?:la\s+)?(?:sélection)?",
+    (r"(?:coupe|couper|\bcut\b)\s*(?:la\s+)?(?:sélection)?",
      "clipboard_cut"),
     (r"(?:sélectionne\s+tout|select\s+all|tout\s+sélectionner)",
      "clipboard_select_all"),
@@ -201,7 +201,7 @@ COMMAND_PATTERNS = [
      "calc_convert"),
 
     # === AUTOMATISATION (avant app_launch car "lance macro" conflicte) ===
-    (r"(?:exécute|exécuter|run|lance)\s+(?:la\s+)?(?:macro|automatisation|script)\s+(.+)",
+    (r"(?:exécute|exécuter|run|lance)\s+(?:l[ea]\s+)?(?:macro|automatisation|script)\s+(.+)",
      "automation_run"),
     (r"(?:automatise|automatiser|automate|macro)\s+(.+)",
      "automation_create"),

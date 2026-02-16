@@ -29,18 +29,18 @@ def _parse_duration(text: str) -> int:
     if m:
         return int(m.group(1)) * 3600 + int(m.group(2)) * 60
 
-    # "X heures"
-    m = re.search(r'(\d+)\s*heures?', text, re.IGNORECASE)
+    # "X heures" or "Xh"
+    m = re.search(r'(\d+)\s*h(?:eures?)?(?!\d)', text, re.IGNORECASE)
     if m:
         return int(m.group(1)) * 3600
 
-    # "X minutes"
+    # "X minutes" or "Xmin"
     m = re.search(r'(\d+)\s*min(?:utes?)?', text, re.IGNORECASE)
     if m:
         return int(m.group(1)) * 60
 
-    # "X secondes"
-    m = re.search(r'(\d+)\s*sec(?:ondes?)?', text, re.IGNORECASE)
+    # "X secondes" or "Xsec" or "Xs"
+    m = re.search(r'(\d+)\s*s(?:ec(?:ondes?)?)?(?!\w)', text, re.IGNORECASE)
     if m:
         return int(m.group(1))
 
