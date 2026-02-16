@@ -34,8 +34,9 @@ class VoiceCommand:
 
 
 # Patterns de commandes vocales FR/EN
+# ORDRE CRITIQUE: patterns spécifiques AVANT patterns génériques
 COMMAND_PATTERNS = [
-    # === DICTÉE (prioritaire - avant app_close qui matche aussi "arrête") ===
+    # === DICTÉE (prioritaire - avant app_close qui matche "arrête") ===
     (r"(?:mode\s+dictée|dictation\s+mode|commence\s+à\s+écrire|écris)",
      "dictation_start"),
     (r"(?:arrête\s+la\s+dictée|stop\s+dictation|fin\s+de\s+dictée|arrête\s+d'écrire)",
@@ -45,7 +46,127 @@ COMMAND_PATTERNS = [
     (r"(?:point\s+final|point\s*$)",
      "dictation_period"),
 
-    # === APPLICATIONS ===
+    # === MÉDIA (avant app_close car "arrête la musique" conflicte) ===
+    (r"(?:arrête\s+la\s+musique|arrête\s+la\s+lecture)",
+     "media_pause"),
+    (r"(?:play|lecture|joue|jouer)",
+     "media_play"),
+    (r"(?:pause)",
+     "media_pause"),
+    (r"(?:suivant|next|piste\s+suivante|chanson\s+suivante)",
+     "media_next"),
+    (r"(?:précédent|previous|piste\s+précédente|chanson\s+précédente)",
+     "media_previous"),
+
+    # === PROCESSUS & MONITORING (avant app_launch car "liste/kill" conflicte) ===
+    (r"(?:liste|lister|list)\s+(?:les\s+)?(?:processus|process|tâches)",
+     "process_list"),
+    (r"(?:tue|tuer|kill)\s+(?:le\s+)?(?:processus|process)\s+(.+)",
+     "process_kill"),
+    (r"(?:ressources|resources|charge|utilisation)\s*(?:système|system)?",
+     "system_resources"),
+    (r"(?:utilisation\s+(?:cpu|ram|système|system))",
+     "system_resources"),
+    (r"(?:cpu|processeur)\s*(?:usage|utilisation)?",
+     "system_top_cpu"),
+    (r"(?:\bram\b|mémoire|memory)\s*(?:usage|utilisation)?",
+     "system_resources"),
+    (r"(?:espace\s+disque|disk\s+space|stockage|disque\s+dur)",
+     "system_disk"),
+    (r"(?:uptime|durée\s+de\s+fonctionnement|allumé\s+depuis)",
+     "system_uptime"),
+    (r"(?:gpu|carte\s+graphique)",
+     "system_gpu"),
+    (r"(?:matériel|hardware|specs|configuration\s+matérielle|info(?:rmation)?s?\s+(?:matériel(?:les?)?|système)|system\s+info)",
+     "system_hardware"),
+
+    # === RÉSEAU (avant app_launch) ===
+    (r"(?:état\s+(?:du\s+)?réseau|network\s+status|interfaces?\s+réseau)",
+     "network_status"),
+    (r"(?:(?:adresse\s+)?ip\s+publique|public\s+ip|ip\s+externe)",
+     "network_ip_public"),
+    (r"(?:adresse\s+ip|ip\s+locale|mon\s+ip|ip\s+address)",
+     "network_ip"),
+    (r"(?:ping)\s+(.+)",
+     "network_ping"),
+    (r"(?:teste?\s+(?:la\s+)?connexion|connection\s+test)",
+     "network_ping"),
+    (r"(?:réseaux?\s+wifi|wifi\s+(?:disponibles?|list)|scan\s+wifi)",
+     "network_wifi_list"),
+    (r"(?:test\s+(?:de\s+)?débit|speed\s*test|vitesse\s+internet)",
+     "network_speed"),
+
+    # === ALIMENTATION & AFFICHAGE (avant jarvis_settings car "paramètres" conflicte) ===
+    (r"(?:plan\s+(?:d')?alimentation|power\s+plan)",
+     "power_plan"),
+    (r"(?:haute\s+performance|high\s+performance|mode\s+performance)",
+     "power_high_perf"),
+    (r"(?:mode\s+équilibré|balanced)",
+     "power_balanced"),
+    (r"(?:économie\s+d'énergie|power\s+saver|mode\s+éco)",
+     "power_saver"),
+    (r"(?:hibernation|hiberne|hibernate)",
+     "power_hibernate"),
+    (r"(?:résolution)\s*(?:d'écran)?",
+     "display_resolution"),
+    (r"(?:mode\s+nuit|night\s+(?:mode|light)|lumière\s+bleue|filtre\s+bleu)",
+     "display_night"),
+    (r"(?:paramètres?\s+(?:d')?affichage|display\s+settings)",
+     "display_settings"),
+    (r"(?:paramètres?\s+(?:du?\s+)?son|audio\s+settings|paramètres?\s+audio)",
+     "audio_settings"),
+
+    # === LOGICIELS winget (avant app_launch car "installe/désinstalle" conflicte) ===
+    (r"(?:désinstalle|désinstaller|uninstall)\s+(?:le\s+)?(?:logiciel|programme)?\s*(.+)",
+     "software_uninstall"),
+    (r"(?:installe|installer|install)\s+(?:le\s+)?(?:logiciel|programme|package)?\s*(.+)",
+     "software_install"),
+    (r"(?:mets?\s+à\s+jour\s+tout|update\s+all|mise\s+à\s+jour\s+(?:de\s+)?tout)",
+     "software_update_all"),
+    (r"(?:liste\s+(?:les\s+)?(?:logiciels|programmes)|installed\s+software|programmes?\s+installés?)",
+     "software_list"),
+    (r"(?:mises?\s+à\s+jour|updates?\s+disponibles?|vérifi(?:e|er)\s+(?:les\s+)?mises?\s+à\s+jour)",
+     "software_check_updates"),
+
+    # === PRESSE-PAPIERS (avant app_launch) ===
+    (r"(?:lis\s+le\s+presse-papiers|read\s+clipboard|contenu\s+(?:du\s+)?presse-papiers)",
+     "clipboard_read"),
+    (r"(?:coupe\s+le\s+son)",
+     "system_mute"),
+    (r"(?:coupe|couper|cut)\s*(?:la\s+)?(?:sélection)?",
+     "clipboard_cut"),
+    (r"(?:sélectionne\s+tout|select\s+all|tout\s+sélectionner)",
+     "clipboard_select_all"),
+
+    # === NAVIGATION DOSSIERS (avant app_launch car "ouvre" conflicte) ===
+    (r"(?:ouvre|ouvrir)\s+(?:le\s+)?(?:dossier|répertoire|folder)\s+(.+)",
+     "navigate_folder"),
+    (r"(?:ouvre|ouvrir)\s+(?:les\s+)?(?:téléchargements|downloads)",
+     "navigate_downloads"),
+    (r"(?:ouvre|ouvrir)\s+(?:les\s+)?(?:documents)",
+     "navigate_documents"),
+    (r"(?:ouvre|ouvrir)\s+(?:le\s+)?(?:bureau|desktop)",
+     "navigate_desktop"),
+
+    # === WEB (avant fichiers car "recherche sur google" conflicte avec file_search) ===
+    (r"(?:google|recherche\s+sur\s+google|cherche\s+sur\s+google)\s+(.+)",
+     "web_google"),
+    (r"(?:youtube)\s+(.+)",
+     "web_youtube"),
+    (r"(?:wikipedia|wiki)\s+(.+)",
+     "web_wikipedia"),
+    (r"(?:va\s+sur|ouvre\s+le\s+site|navigate|go\s+to)\s+(.+)",
+     "web_navigate"),
+    (r"(?:météo|weather|temps\s+qu'il\s+fait)",
+     "web_weather"),
+
+    # === AUTOMATISATION (avant app_launch car "lance macro" conflicte) ===
+    (r"(?:automatise|automatiser|automate|macro)\s+(.+)",
+     "automation_create"),
+    (r"(?:exécute|exécuter|run|lance)\s+(?:la\s+)?(?:macro|automatisation|script)\s+(.+)",
+     "automation_run"),
+
+    # === APPLICATIONS (générique - après tous les patterns spécifiques) ===
     (r"(?:ouvre|ouvrir|lance|lancer|démarre|démarrer|start|open|launch)\s+(.+)",
      "app_launch"),
     (r"(?:ferme|fermer|quitte|quitter|close|kill|arrête|arrêter)\s+(.+)",
@@ -56,7 +177,7 @@ COMMAND_PATTERNS = [
      "file_create"),
     (r"(?:supprime|supprimer|efface|effacer|delete)\s+(?:le\s+)?(?:fichier|dossier)?\s*(.+)",
      "file_delete"),
-    (r"(?:cherche|chercher|recherche|rechercher|trouve|trouver|find|search)\s+(?:le\s+)?(?:fichier\s+)?(.+)",
+    (r"(?:cherche|chercher|recherche(?:r)?|trouve|trouver|find|search)\s+(?:le\s+fichier\s+)?(.+)",
      "file_search"),
     (r"(?:renomme|renommer|rename)\s+(.+)\s+en\s+(.+)",
      "file_rename"),
@@ -106,34 +227,6 @@ COMMAND_PATTERNS = [
      "system_time"),
     (r"(?:date|quel\s+jour|today)",
      "system_date"),
-    (r"(?:météo|weather|temps\s+qu'il\s+fait)",
-     "web_weather"),
-
-    # === WEB ===
-    (r"(?:google|recherche\s+sur\s+google|cherche\s+sur\s+google)\s+(.+)",
-     "web_google"),
-    (r"(?:youtube)\s+(.+)",
-     "web_youtube"),
-    (r"(?:wikipedia|wiki)\s+(.+)",
-     "web_wikipedia"),
-    (r"(?:va\s+sur|ouvre\s+le\s+site|navigate|go\s+to)\s+(.+)",
-     "web_navigate"),
-
-    # === MÉDIA ===
-    (r"(?:play|lecture|joue|jouer|lis|lire)",
-     "media_play"),
-    (r"(?:pause|stop|arrête\s+la\s+musique|arrête\s+la\s+lecture)",
-     "media_pause"),
-    (r"(?:suivant|next|piste\s+suivante|chanson\s+suivante)",
-     "media_next"),
-    (r"(?:précédent|previous|piste\s+précédente|chanson\s+précédente)",
-     "media_previous"),
-
-    # === AUTOMATISATION ===
-    (r"(?:automatise|automatiser|automate|macro)\s+(.+)",
-     "automation_create"),
-    (r"(?:exécute|exécuter|run|lance)\s+(?:la\s+)?(?:macro|automatisation|script)\s+(.+)",
-     "automation_run"),
 
     # === CONTRÔLE JARVIS ===
     (r"(?:aide|help|qu'est-ce\s+que\s+tu\s+(?:sais|peux)\s+faire|commandes)",

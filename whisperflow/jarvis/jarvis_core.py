@@ -20,6 +20,10 @@ from .skills.file_manager import FileManagerSkill
 from .skills.web_browser import WebBrowserSkill
 from .skills.media_control import MediaControlSkill
 from .skills.clipboard_manager import ClipboardManagerSkill
+from .skills.process_manager import ProcessManagerSkill
+from .skills.network_control import NetworkControlSkill
+from .skills.power_display import PowerDisplaySkill
+from .skills.software_manager import SoftwareManagerSkill
 
 # Agents
 from .agents.dictation_agent import DictationAgent
@@ -48,6 +52,10 @@ class Jarvis:
         self.web_browser = WebBrowserSkill()
         self.media_control = MediaControlSkill()
         self.clipboard = ClipboardManagerSkill()
+        self.process_mgr = ProcessManagerSkill()
+        self.network = NetworkControlSkill()
+        self.power_display = PowerDisplaySkill()
+        self.software = SoftwareManagerSkill()
 
         # Agents
         self.dictation = DictationAgent()
@@ -114,6 +122,51 @@ class Jarvis:
         # Presse-papiers
         c.register("clipboard_copy", self.clipboard.copy)
         c.register("clipboard_paste", self.clipboard.paste)
+        c.register("clipboard_cut", self.clipboard.cut)
+        c.register("clipboard_select_all", self.clipboard.select_all)
+        c.register("clipboard_read", self.clipboard.read_clipboard)
+
+        # Processus & Monitoring
+        c.register("process_list", self.process_mgr.list_processes)
+        c.register("process_kill", self.process_mgr.kill_process)
+        c.register("system_resources", self.process_mgr.system_resources)
+        c.register("system_top_cpu", self.process_mgr.top_cpu)
+        c.register("system_disk", self.process_mgr.disk_space)
+        c.register("system_uptime", self.process_mgr.uptime)
+        c.register("system_gpu", self.process_mgr.gpu_info)
+        c.register("system_hardware", self.process_mgr.hardware_info)
+
+        # Réseau
+        c.register("network_status", self.network.network_status)
+        c.register("network_ip", self.network.ip_local)
+        c.register("network_ip_public", self.network.ip_public)
+        c.register("network_ping", self.network.ping)
+        c.register("network_wifi_list", self.network.wifi_list)
+        c.register("network_speed", self.network.speed_test)
+
+        # Alimentation & Affichage
+        c.register("power_plan", self.power_display.power_plan)
+        c.register("power_high_perf", self.power_display.set_high_performance)
+        c.register("power_balanced", self.power_display.set_balanced)
+        c.register("power_saver", self.power_display.set_power_saver)
+        c.register("power_hibernate", self.power_display.hibernate)
+        c.register("display_resolution", self.power_display.screen_resolution)
+        c.register("display_night", self.power_display.night_mode)
+        c.register("display_settings", self.power_display.display_settings)
+        c.register("audio_settings", self.power_display.sound_settings)
+
+        # Logiciels
+        c.register("software_install", self.software.install)
+        c.register("software_uninstall", self.software.uninstall)
+        c.register("software_update_all", self.software.update_all)
+        c.register("software_list", self.software.list_installed)
+        c.register("software_check_updates", self.software.check_updates)
+
+        # Navigation dossiers
+        c.register("navigate_folder", self.navigation.navigate)
+        c.register("navigate_downloads", self._nav_downloads)
+        c.register("navigate_documents", self._nav_documents)
+        c.register("navigate_desktop", self._nav_desktop)
 
         # Dictée
         c.register("dictation_start", self.dictation.start)
@@ -246,6 +299,18 @@ class Jarvis:
                 await asyncio.sleep(0.5)
             return CommandResult(True, "Macro terminée")
         return result
+
+    async def _nav_downloads(self, command: VoiceCommand) -> CommandResult:
+        cmd = VoiceCommand("téléchargements", "navigate_folder", target="téléchargements")
+        return await self.navigation.navigate(cmd)
+
+    async def _nav_documents(self, command: VoiceCommand) -> CommandResult:
+        cmd = VoiceCommand("documents", "navigate_folder", target="documents")
+        return await self.navigation.navigate(cmd)
+
+    async def _nav_desktop(self, command: VoiceCommand) -> CommandResult:
+        cmd = VoiceCommand("bureau", "navigate_folder", target="bureau")
+        return await self.navigation.navigate(cmd)
 
     @property
     def is_running(self):
