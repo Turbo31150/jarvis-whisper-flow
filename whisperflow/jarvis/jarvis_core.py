@@ -36,6 +36,10 @@ from .skills.password_generator import PasswordGeneratorSkill
 from .skills.date_calculator import DateCalculatorSkill
 from .skills.text_tools import TextToolsSkill
 from .skills.favorites import FavoritesSkill
+from .skills.stopwatch import StopwatchSkill
+from .skills.agenda import AgendaSkill
+from .skills.random_picker import RandomPickerSkill
+from .skills.abbreviations import AbbreviationsSkill
 
 # Agents
 from .agents.dictation_agent import DictationAgent
@@ -80,6 +84,10 @@ class Jarvis:
         self.date_calc = DateCalculatorSkill()
         self.text_tools = TextToolsSkill()
         self.favorites = FavoritesSkill()
+        self.stopwatch = StopwatchSkill()
+        self.agenda = AgendaSkill()
+        self.random_picker = RandomPickerSkill()
+        self.abbreviations = AbbreviationsSkill()
 
         # Agents
         self.dictation = DictationAgent()
@@ -261,6 +269,29 @@ class Jarvis:
         c.register("fav_list", self.favorites.list_favorites)
         c.register("fav_remove", self.favorites.remove)
         c.register("fav_run", self.favorites.run_favorite)
+
+        # Chronometre
+        c.register("stopwatch_start", self.stopwatch.start)
+        c.register("stopwatch_stop", self.stopwatch.stop)
+        c.register("stopwatch_lap", self.stopwatch.lap)
+        c.register("stopwatch_reset", self.stopwatch.reset)
+        c.register("stopwatch_status", self.stopwatch.status)
+
+        # Agenda
+        c.register("agenda_add", self.agenda.add_event)
+        c.register("agenda_list", self.agenda.list_events)
+        c.register("agenda_clear", self.agenda.clear_events)
+        c.register("agenda_next", self.agenda.next_event)
+
+        # Aleatoire
+        c.register("random_coin", self.random_picker.flip_coin)
+        c.register("random_dice", self.random_picker.roll_dice)
+        c.register("random_pick", self.random_picker.pick)
+        c.register("random_number", self.random_picker.random_num)
+
+        # Abreviations
+        c.register("abbrev_define", self.abbreviations.define)
+        c.register("abbrev_list", self.abbreviations.list_category)
 
         # Automatisation
         c.register("automation_create", self.automation.create)

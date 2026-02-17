@@ -270,6 +270,44 @@ COMMAND_PATTERNS = [
     (r"(?:lance\s+(?:le\s+)?favori|favori)\s+(\d+|.+)",
      "fav_run"),
 
+    # === CHRONOMETRE ===
+    (r"(?:chrono(?:m[èe]tre)?\s+(?:d[ée]marre|start|lance)|d[ée]marre\s+(?:le\s+)?chrono(?:m[èe]tre)?|start\s+stopwatch)",
+     "stopwatch_start"),
+    (r"(?:arr[êe]te\s+(?:le\s+)?chrono(?:m[èe]tre)?|stop\s+(?:le\s+)?chrono(?:m[èe]tre)?|chrono\s+stop)",
+     "stopwatch_stop"),
+    (r"(?:tour|lap)\s*(?:du\s+)?(?:chrono(?:m[èe]tre)?)?",
+     "stopwatch_lap"),
+    (r"(?:r[ée]initialise|reset)\s+(?:le\s+)?chrono(?:m[èe]tre)?",
+     "stopwatch_reset"),
+    (r"(?:temps\s+(?:du\s+)?chrono(?:m[èe]tre)?|chrono\s+status)",
+     "stopwatch_status"),
+
+    # === AGENDA (clear/next AVANT list car "l'agenda" dans list matche trop) ===
+    (r"(?:agenda\s+ajoute|ajoute\s+(?:[àa])\s+l'agenda|[ée]v[ée]nement)\s+(.+)",
+     "agenda_add"),
+    (r"(?:vide\s+(?:l')?agenda|efface\s+(?:l')?agenda|clear\s+agenda)",
+     "agenda_clear"),
+    (r"(?:prochain\s+[ée]v[ée]nement|next\s+event|qu'est-ce\s+(?:que\s+)?(?:j'ai\s+)?(?:apr[èe]s|ensuite))",
+     "agenda_next"),
+    (r"(?:agenda|(?:mon|l')\s*agenda|planning|[ée]v[ée]nements?\s+(?:du\s+jour|pr[ée]vus?))",
+     "agenda_list"),
+
+    # === ALEATOIRE ===
+    (r"(?:pile\s+ou\s+face|coin\s+flip|lance\s+(?:une\s+)?pi[èe]ce)",
+     "random_coin"),
+    (r"(?:lance\s+(?:un\s+)?d[ée]|d[ée]\s+[àa]\s+(\d+)|roll\s+dice|jet\s+de\s+d[ée])",
+     "random_dice"),
+    (r"(?:choisis?\s+(?:entre|parmi)|pick|random\s+choice)\s+(.+)",
+     "random_pick"),
+    (r"(?:nombre\s+al[ée]atoire|random\s+number|nombre\s+au\s+hasard)\s*(.*)",
+     "random_number"),
+
+    # === ABREVIATIONS (list avant define car "abreviations" matche aussi define) ===
+    (r"(?:liste\s+(?:des?\s+)?abr[ée]viations?|abr[ée]viations?\s+(?:disponibles?|connues?))",
+     "abbrev_list"),
+    (r"(?:(?:que\s+)?(?:signifie|veut\s+dire)|d[ée]finition\s+(?:de\s+)?|abr[ée]viation)\s*([A-Za-zÀ-ÿ]+)",
+     "abbrev_define"),
+
     # === AUTOMATISATION (avant app_launch car "lance macro" conflicte) ===
     (r"(?:exécute|exécuter|run|lance)\s+(?:l[ea]\s+)?(?:macro|automatisation|script)\s+(.+)",
      "automation_run"),
@@ -383,7 +421,7 @@ class Commander:
             match = pattern.search(text_clean)
             if match:
                 groups = match.groups()
-                target = groups[0].strip() if groups else ""
+                target = groups[0].strip() if groups and groups[0] else ""
                 params = {"groups": groups} if len(groups) > 1 else {}
 
                 cmd = VoiceCommand(
