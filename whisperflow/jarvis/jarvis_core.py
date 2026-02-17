@@ -32,6 +32,10 @@ from .skills.translator import TranslatorSkill
 from .skills.unit_converter import UnitConverterSkill
 from .skills.pomodoro import PomodoroSkill
 from .skills.system_snapshot import SystemSnapshotSkill
+from .skills.password_generator import PasswordGeneratorSkill
+from .skills.date_calculator import DateCalculatorSkill
+from .skills.text_tools import TextToolsSkill
+from .skills.favorites import FavoritesSkill
 
 # Agents
 from .agents.dictation_agent import DictationAgent
@@ -72,6 +76,10 @@ class Jarvis:
         self.unit_converter = UnitConverterSkill()
         self.pomodoro = PomodoroSkill()
         self.snapshot = SystemSnapshotSkill()
+        self.password = PasswordGeneratorSkill()
+        self.date_calc = DateCalculatorSkill()
+        self.text_tools = TextToolsSkill()
+        self.favorites = FavoritesSkill()
 
         # Agents
         self.dictation = DictationAgent()
@@ -231,6 +239,28 @@ class Jarvis:
         c.register("snapshot_take", self.snapshot.take_snapshot)
         c.register("snapshot_compare", self.snapshot.compare)
         c.register("snapshot_history", self.snapshot.history)
+
+        # Mot de passe
+        c.register("password_generate", self.password.generate)
+        c.register("password_strength", self.password.strength)
+
+        # Dates
+        c.register("date_days_until", self.date_calc.days_until)
+        c.register("date_add_days", self.date_calc.add_days_cmd)
+        c.register("date_day_of_week", self.date_calc.day_of_week)
+
+        # Outils texte
+        c.register("text_count", self.text_tools.count_words)
+        c.register("text_uppercase", self.text_tools.uppercase)
+        c.register("text_lowercase", self.text_tools.lowercase)
+        c.register("text_acronym", self.text_tools.acronym)
+        c.register("text_spell", self.text_tools.spell)
+
+        # Favoris
+        c.register("fav_add", self.favorites.add)
+        c.register("fav_list", self.favorites.list_favorites)
+        c.register("fav_remove", self.favorites.remove)
+        c.register("fav_run", self.favorites.run_favorite)
 
         # Automatisation
         c.register("automation_create", self.automation.create)

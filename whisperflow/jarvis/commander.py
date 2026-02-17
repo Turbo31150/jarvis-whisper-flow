@@ -153,7 +153,7 @@ COMMAND_PATTERNS = [
     # === NAVIGATION DOSSIERS (avant app_launch car "ouvre" conflicte) ===
     (r"(?:ouvre|ouvrir)\s+(?:le\s+)?(?:dossier|répertoire|folder)\s+(.+)",
      "navigate_folder"),
-    (r"(?:ouvre|ouvrir)\s+(?:les\s+)?(?:téléchargements|downloads)",
+    (r"(?:ouvre|ouvrir)\s+(?:les\s+)?(?:t[ée]l[ée]chargements|downloads)",
      "navigate_downloads"),
     (r"(?:ouvre|ouvrir)\s+(?:les\s+)?(?:documents)",
      "navigate_documents"),
@@ -217,20 +217,58 @@ COMMAND_PATTERNS = [
      "translate_lookup"),
 
     # === POMODORO (stop/status AVANT start car "pomodoro" nu dans start matche tout) ===
-    (r"(?:arrête\s+(?:le\s+)?pomodoro|stop\s+pomodoro|fin\s+(?:du\s+)?pomodoro)",
+    (r"(?:arr[êe]te\s+(?:le\s+)?pomodoro|stop\s+pomodoro|fin\s+(?:du\s+)?pomodoro)",
      "pomodoro_stop"),
-    (r"(?:état\s+(?:du\s+)?pomodoro|pomodoro\s+status|où\s+en\s+est\s+le\s+pomodoro|status\s+pomodoro)",
+    (r"(?:[ée]tat\s+(?:du\s+)?pomodoro|pomodoro\s+status|o[ùu]\s+en\s+est\s+le\s+pomodoro|status\s+pomodoro)",
      "pomodoro_status"),
     (r"(?:pomodoro|lance\s+(?:un\s+)?pomodoro|technique\s+pomodoro|mode\s+travail)",
      "pomodoro_start"),
 
     # === SNAPSHOT SYSTEME ===
-    (r"(?:snapshot\s+(?:du\s+)?système|capture\s+(?:du\s+)?système|état\s+complet|system\s+snapshot|bilan\s+système)",
+    (r"(?:snapshot\s+(?:du\s+)?syst[èe]me|capture\s+(?:du\s+)?syst[èe]me|[ée]tat\s+complet|system\s+snapshot|bilan\s+syst[èe]me)",
      "snapshot_take"),
-    (r"(?:compare\s+(?:les\s+)?snapshots?|comparaison\s+système|diff\s+système)",
+    (r"(?:compare\s+(?:les\s+)?snapshots?|comparaison\s+syst[èe]me|diff\s+syst[èe]me)",
      "snapshot_compare"),
-    (r"(?:historique\s+(?:des\s+)?snapshots?|snapshots?\s+précédents?)",
+    (r"(?:historique\s+(?:des\s+)?snapshots?|snapshots?\s+pr[ée]c[ée]dents?)",
      "snapshot_history"),
+
+    # === MOT DE PASSE ===
+    (r"(?:g[ée]n[èe]re|g[ée]n[ée]rer|generate)\s+(?:un\s+)?(?:mot\s+de\s+passe|password|mdp)\s*(.*)",
+     "password_generate"),
+    (r"(?:force|strength)\s+(?:du\s+)?(?:mot\s+de\s+passe|password)\s+(.+)",
+     "password_strength"),
+
+    # === DATES (avant app_launch car "dans combien" conflicte) ===
+    (r"(?:dans\s+combien\s+de\s+jours?|combien\s+de\s+jours?\s+(?:avant|jusqu'[àa]))\s+(.+)",
+     "date_days_until"),
+    (r"(?:quel\s+jour)\s+(?:sera|serons-nous|dans)\s+(.+)",
+     "date_add_days"),
+    (r"(?:dans\s+(\d+)\s+jours?)",
+     "date_add_days"),
+    (r"(?:quel\s+jour\s+(?:[ée]tait|est)\s+le|jour\s+de\s+la\s+semaine)\s+(.+)",
+     "date_day_of_week"),
+
+    # === OUTILS TEXTE ===
+    (r"(?:compte\s+(?:les\s+)?mots?|word\s+count)\s+(?:dans\s+|de\s+)?(.+)",
+     "text_count"),
+    (r"(?:en\s+majuscules?|uppercase|majuscule)\s+(.+)",
+     "text_uppercase"),
+    (r"(?:en\s+minuscules?|lowercase|minuscule)\s+(.+)",
+     "text_lowercase"),
+    (r"(?:acronyme|acronym)\s+(?:de\s+)?(.+)",
+     "text_acronym"),
+    (r"(?:[ée]pelle|[ée]peler|spell)\s+(.+)",
+     "text_spell"),
+
+    # === FAVORIS (avant app_launch car "ajoute/lance favori" conflicte) ===
+    (r"(?:ajoute\s+(?:en|aux?)\s+favoris?|favori\s+ajout(?:e|er))\s+(.+)",
+     "fav_add"),
+    (r"(?:liste\s+(?:les\s+)?favoris?|mes\s+favoris?|favoris?\s+list)",
+     "fav_list"),
+    (r"(?:supprime\s+(?:le\s+)?favori|retire\s+(?:le\s+)?favori|favori\s+supprim(?:e|er))\s+(.+)",
+     "fav_remove"),
+    (r"(?:lance\s+(?:le\s+)?favori|favori)\s+(\d+|.+)",
+     "fav_run"),
 
     # === AUTOMATISATION (avant app_launch car "lance macro" conflicte) ===
     (r"(?:exécute|exécuter|run|lance)\s+(?:l[ea]\s+)?(?:macro|automatisation|script)\s+(.+)",
