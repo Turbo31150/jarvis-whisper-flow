@@ -210,17 +210,17 @@ whisperflow/
 ## Benchmark
 
 ```
-JARVIS BENCHMARK -- 37 cycles (toutes categories)
-  Total: 37 | Success: 37 | Errors: 0
-  Avg Score: 90.7/100 | Avg Latency: 1.81s
+JARVIS BENCHMARK -- 100 cycles
+  Total: 100 | Success: 98/100 (98%) | Errors: 2 (timeout)
+  Score: 91.2/100 | Latence: 1.59s moyenne
 
-  Agents: Commander=22 | M1=1 | OL1=14 | FAIL=0
+  Agents: Commander=59 | OL1=36 | M1=3 | FAIL=2
 
   Par categorie:
-    voice_commands      : 10/10 | Avg: 91.0/100
-    llm_questions       : 10/10 | Avg: 87.5/100
-    mixed_actions       : 10/10 | Avg: 94.5/100
-    edge_cases          :  7/7  | Avg: 89.3/100
+    voice_commands      : 30/30 | Avg: 92.2/100
+    llm_questions       : 28/30 | Avg: 88.6/100
+    mixed_actions       : 26/26 | Avg: 94.4/100
+    edge_cases          : 14/14 | Avg: 88.6/100
 ```
 
 Lancer le benchmark:
