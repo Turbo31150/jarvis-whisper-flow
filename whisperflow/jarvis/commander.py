@@ -394,16 +394,33 @@ COMMAND_PATTERNS = [
 ]
 
 
+def _normalize_accents(text: str) -> str:
+    """Normalise les accents pour matcher Whisper output (souvent sans accents)."""
+    # Add accented variants so both 'dictee' and 'dictée' match
+    import unicodedata
+    # Decompose then remove combining chars → pure ASCII
+    nfkd = unicodedata.normalize('NFKD', text)
+    return ''.join(c for c in nfkd if not unicodedata.combining(c))
+
+
 class Commander:
     """Parseur et dispatcher principal de commandes vocales"""
 
     def __init__(self):
         self._handlers: dict[str, Callable] = {}
         self._last_command: Optional[VoiceCommand] = None
-        self._compiled_patterns = [
-            (re.compile(pattern, re.IGNORECASE), intent)
-            for pattern, intent in COMMAND_PATTERNS
-        ]
+        # Compile patterns with both accented and normalized versions
+        self._compiled_patterns = []
+        for pattern, intent in COMMAND_PATTERNS:
+            self._compiled_patterns.append(
+                (re.compile(pattern, re.IGNORECASE), intent)
+            )
+            # Also compile accent-stripped version
+            stripped = _normalize_accents(pattern)
+            if stripped != pattern:
+                self._compiled_patterns.append(
+                    (re.compile(stripped, re.IGNORECASE), intent)
+                )
 
     def register(self, intent: str, handler: Callable[..., Awaitable[CommandResult]]):
         """Enregistre un handler pour un intent donné"""
@@ -416,9 +433,11 @@ class Commander:
             return None
 
         text_clean = text.strip().lower()
+        # Also try accent-stripped version of the input
+        text_normalized = _normalize_accents(text_clean)
 
         for pattern, intent in self._compiled_patterns:
-            match = pattern.search(text_clean)
+            match = pattern.search(text_clean) or pattern.search(text_normalized)
             if match:
                 groups = match.groups()
                 target = groups[0].strip() if groups and groups[0] else ""

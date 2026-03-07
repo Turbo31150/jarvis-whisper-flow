@@ -46,7 +46,7 @@ from .agents.dictation_agent import DictationAgent
 from .agents.search_agent import SearchAgent
 from .agents.automation_agent import AutomationAgent
 from .agents.navigation_agent import NavigationAgent
-from .cluster_bridge import cluster_race, query_m1
+from .cluster_bridge import cluster_race, query_m1, dispatch_cowork
 
 logger = logging.getLogger("jarvis.core")
 
@@ -406,15 +406,42 @@ class Jarvis:
         return CommandResult(False, "Aucune commande à répéter")
 
     async def _unknown(self, command: VoiceCommand) -> CommandResult:
-        """Commande non reconnue → cluster race M1/OL1 pour réponse LLM"""
+        """Commande non reconnue → cluster race M1/OL1 + cowork dispatch."""
         text = command.target or command.raw_text
+
+        # System keywords → try cowork scripts in parallel with LLM
+        sys_keywords = {"gpu", "cpu", "ram", "thermal", "disque", "réseau",
+                        "processus", "service", "firewall", "driver", "audit"}
+        is_sys_query = any(kw in text.lower() for kw in sys_keywords)
+
         try:
-            reply, agent = await cluster_race(text)
-            if reply:
-                logger.info(f"Cluster [{agent}] → {reply[:80]}")
-                return CommandResult(True, reply)
+            if is_sys_query:
+                # Parallel: cowork + cluster
+                cowork_task = asyncio.create_task(dispatch_cowork(text))
+                cluster_task = asyncio.create_task(cluster_race(text))
+                done, _ = await asyncio.wait(
+                    [cowork_task, cluster_task],
+                    timeout=15, return_when=asyncio.FIRST_COMPLETED
+                )
+                for task in done:
+                    result = task.result()
+                    if isinstance(result, tuple):
+                        reply, agent = result
+                    elif isinstance(result, str):
+                        reply, agent = result, "COWORK"
+                    else:
+                        continue
+                    if reply:
+                        logger.info(f"[{agent}] → {str(reply)[:80]}")
+                        return CommandResult(True, str(reply))
+            else:
+                reply, agent = await cluster_race(text)
+                if reply:
+                    logger.info(f"Cluster [{agent}] → {reply[:80]}")
+                    return CommandResult(True, reply)
         except Exception as e:
-            logger.warning(f"Cluster race failed: {e}")
+            logger.warning(f"Pipeline failed: {e}")
+
         return CommandResult(False,
             f"Je n'ai pas compris '{command.target}'. "
             f"Dites 'aide' pour la liste des commandes."
