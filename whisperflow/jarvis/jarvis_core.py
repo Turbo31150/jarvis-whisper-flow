@@ -298,6 +298,22 @@ class Jarvis:
         c.register("automation_create", self.automation.create)
         c.register("automation_run", self._run_macro)
 
+        # Navigation avancee (browser memory + Playwright)
+        c.register("browser_bookmark", self._browser_bookmark)
+        c.register("browser_bookmarks_list", self._browser_bookmarks_list)
+        c.register("browser_history", self._browser_history)
+        c.register("browser_search_history", self._browser_search_history)
+        c.register("browser_goto_remembered", self._browser_goto)
+        c.register("browser_landmarks", self._browser_landmarks)
+        c.register("browser_scroll_to", self._browser_scroll_to)
+        c.register("browser_summarize", self._browser_summarize)
+        c.register("browser_add_note", self._browser_add_note)
+        c.register("browser_save_session", self._browser_save_session)
+        c.register("browser_restore_session", self._browser_restore_session)
+        c.register("browser_most_visited", self._browser_most_visited)
+        c.register("browser_read", self._browser_read)
+        c.register("browser_click", self._browser_click)
+
         # Contrôle JARVIS
         c.register("jarvis_help", self._help)
         c.register("jarvis_status", self._status)
@@ -467,6 +483,75 @@ class Jarvis:
     async def _nav_desktop(self, command: VoiceCommand) -> CommandResult:
         cmd = VoiceCommand("bureau", "navigate_folder", target="bureau")
         return await self.navigation.navigate(cmd)
+
+    # === Browser avance (delegation vers src.commands_browser) ===
+
+    async def _browser_exec(self, name: str, params: dict = None) -> CommandResult:
+        """Execute une commande browser via le module turbo."""
+        try:
+            from src.commands_browser import execute_browser_command
+            result = await execute_browser_command(name, params)
+            if result.get("status") == "error":
+                return CommandResult(False, result.get("error", "Erreur navigateur"))
+            # Format voice-friendly response
+            r = result.get("result", result)
+            if isinstance(r, str):
+                return CommandResult(True, r)
+            if isinstance(r, dict):
+                msg = r.get("message", r.get("title", r.get("summary", str(r)[:200])))
+                return CommandResult(True, str(msg)[:300])
+            if isinstance(r, list):
+                lines = [str(item)[:80] for item in r[:5]]
+                return CommandResult(True, ". ".join(lines) if lines else "Aucun resultat")
+            return CommandResult(True, str(r)[:300])
+        except ImportError:
+            return CommandResult(False, "Module navigateur non disponible")
+        except Exception as e:
+            logger.warning(f"Browser command {name} failed: {e}")
+            return CommandResult(False, f"Erreur: {e}")
+
+    async def _browser_bookmark(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_bookmark")
+
+    async def _browser_bookmarks_list(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_bookmarks_list")
+
+    async def _browser_history(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_history")
+
+    async def _browser_search_history(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_search_history", {"query": cmd.target})
+
+    async def _browser_goto(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_goto_remembered", {"name": cmd.target})
+
+    async def _browser_landmarks(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_landmarks")
+
+    async def _browser_scroll_to(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_scroll_to", {"text": cmd.target})
+
+    async def _browser_summarize(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_summarize")
+
+    async def _browser_add_note(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_add_note", {"note": cmd.target})
+
+    async def _browser_save_session(self, cmd: VoiceCommand) -> CommandResult:
+        name = cmd.target if cmd.target else f"session_{int(__import__('time').time())}"
+        return await self._browser_exec("browser_save_session", {"name": name})
+
+    async def _browser_restore_session(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_restore_session", {"name": cmd.target})
+
+    async def _browser_most_visited(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_most_visited")
+
+    async def _browser_read(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_read")
+
+    async def _browser_click(self, cmd: VoiceCommand) -> CommandResult:
+        return await self._browser_exec("browser_click", {"text": cmd.target})
 
     @property
     def is_running(self):
