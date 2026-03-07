@@ -207,6 +207,34 @@ whisperflow/
 | M2 | 192.168.1.26:1234 | deepseek-r1 | 44 tok/s |
 | M3 | 192.168.1.113:1234 | deepseek-r1 | 33 tok/s |
 
+## Benchmark
+
+```
+JARVIS BENCHMARK -- 37 cycles (toutes categories)
+  Total: 37 | Success: 37 | Errors: 0
+  Avg Score: 90.7/100 | Avg Latency: 1.81s
+
+  Agents: Commander=22 | M1=1 | OL1=14 | FAIL=0
+
+  Par categorie:
+    voice_commands      : 10/10 | Avg: 91.0/100
+    llm_questions       : 10/10 | Avg: 87.5/100
+    mixed_actions       : 10/10 | Avg: 94.5/100
+    edge_cases          :  7/7  | Avg: 89.3/100
+```
+
+Lancer le benchmark:
+```bash
+python benchmark_telegram.py --cycles 100 --verbose
+```
+
+## Integration jarvis-cowork (395 scripts)
+
+Le repo [jarvis-cowork](https://github.com/Turbo31150/jarvis-cowork) ajoute 395 scripts autonomes:
+- `cluster_bridge.py` fait le lien via `cluster_race()` (M1 vs OL1, first wins)
+- Commandes non reconnues par Commander -> cluster LLM -> reponse vocale
+- Scripts cowork accessibles via MCP bridge (`cowork_mcp_bridge.py`)
+
 ## Licence
 
 MIT
