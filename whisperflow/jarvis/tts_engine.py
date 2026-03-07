@@ -20,9 +20,26 @@ class TTSEngine:
         self._edge_available = None
         self._pyttsx_engine = None
 
+    @staticmethod
+    def _clean_for_speech(text: str) -> str:
+        """Nettoie le texte pour lecture vocale naturelle (sans ponctuation/symboles)"""
+        import re
+        # Retire les blocs de code, URLs, symboles techniques
+        text = re.sub(r'```[\s\S]*?```', '', text)
+        text = re.sub(r'https?://\S+', '', text)
+        text = re.sub(r'[*_~`#\[\](){}|<>]', '', text)
+        # Garde uniquement lettres, chiffres, espaces, virgules, points
+        text = re.sub(r'[^\w\s,.\'-àâäéèêëïîôùûüÿçœæ]', ' ', text)
+        text = re.sub(r'\s+', ' ', text).strip()
+        return text
+
     async def speak(self, text: str):
         """Prononce le texte à voix haute"""
         if not text or not text.strip():
+            return
+
+        text = self._clean_for_speech(text)
+        if not text:
             return
 
         logger.info(f"JARVIS dit: {text}")

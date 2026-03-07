@@ -6,9 +6,19 @@ Lance le serveur WebSocket pour la transcription + traitement JARVIS
 import asyncio
 import json
 import logging
+import os
 import signal
 import sys
 from pathlib import Path
+
+# Fix Windows cp1252 encoding issues
+if sys.platform == "win32":
+    os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 # Ajoute le parent au path pour importer whisperflow
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -26,15 +36,12 @@ logging.basicConfig(
 logger = logging.getLogger("jarvis.server")
 
 # Bannière JARVIS
-BANNER = r"""
-     ██╗ █████╗ ██████╗ ██╗   ██╗██╗███████╗
-     ██║██╔══██╗██╔══██╗██║   ██║██║██╔════╝
-     ██║███████║██████╔╝██║   ██║██║███████╗
-██   ██║██╔══██║██╔══██╗╚██╗ ██╔╝██║╚════██║
-╚█████╔╝██║  ██║██║  ██║ ╚████╔╝ ██║███████║
- ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝  ╚═══╝  ╚═╝╚══════╝
-  Just A Rather Very Intelligent System v1.0
-  Contrôle vocal Windows complet
+BANNER = """
+  ========================================
+   JARVIS v1.0 - Whisper Flow
+   Just A Rather Very Intelligent System
+   Controle vocal Windows complet
+  ========================================
 """
 
 HELP_TEXT = """

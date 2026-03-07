@@ -12,7 +12,7 @@ CONFIG_FILE = JARVIS_DIR / "jarvis_config.json"
 DEFAULT_CONFIG = {
     "wake_word": "jarvis",
     "language": "fr",
-    "tts_voice": "fr-FR-HenriNeural",
+    "tts_voice": "fr-FR-DeniseNeural",
     "tts_rate": "+10%",
     "whisper_model": "tiny",
     "confidence_threshold": 0.6,

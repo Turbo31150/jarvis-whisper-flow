@@ -405,10 +405,74 @@ class Jarvis:
         return CommandResult(False, "Aucune commande à répéter")
 
     async def _unknown(self, command: VoiceCommand) -> CommandResult:
+        """Commande non reconnue → envoie à OpenClaw (M1/qwen3-8b) pour réponse LLM"""
+        text = command.target or command.raw_text
+        try:
+            reply = await self._query_openclaw(text)
+            if reply:
+                return CommandResult(True, reply)
+        except Exception as e:
+            logger.warning(f"OpenClaw fallback failed: {e}")
         return CommandResult(False,
             f"Je n'ai pas compris '{command.target}'. "
             f"Dites 'aide' pour la liste des commandes."
         )
+
+    async def _query_openclaw(self, prompt: str) -> str:
+        """Interroge OpenClaw gateway pour une réponse LLM"""
+        import json
+        try:
+            import httpx
+        except ImportError:
+            # Fallback: appel direct M1 via LM Studio
+            return await self._query_m1_direct(prompt)
+
+        url = "http://127.0.0.1:1234/v1/chat/completions"
+        payload = {
+            "model": "qwen3-8b",
+            "messages": [
+                {"role": "system", "content": "/nothink\nTu es JARVIS, assistant de Turbo. Francais, concis 2-3 phrases."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3,
+            "max_tokens": 200,
+            "stream": False,
+        }
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(url, json=payload)
+            if resp.status_code == 200:
+                data = resp.json()
+                text = data["choices"][0]["message"]["content"]
+                # Nettoie thinking tokens
+                import re
+                text = re.sub(r'<think>[\s\S]*?</think>', '', text).strip()
+                return text if len(text) > 1 else None
+        return None
+
+    async def _query_m1_direct(self, prompt: str) -> str:
+        """Fallback direct M1 sans httpx (via subprocess curl)"""
+        import json, subprocess
+        body = json.dumps({
+            "model": "qwen3-8b",
+            "messages": [
+                {"role": "system", "content": "/nothink\nTu es JARVIS. Francais, concis."},
+                {"role": "user", "content": prompt}
+            ],
+            "temperature": 0.3, "max_tokens": 200, "stream": False
+        })
+        proc = await asyncio.create_subprocess_exec(
+            "curl", "-s", "--max-time", "12",
+            "http://127.0.0.1:1234/v1/chat/completions",
+            "-H", "Content-Type: application/json",
+            "-d", body,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.DEVNULL
+        )
+        stdout, _ = await asyncio.wait_for(proc.communicate(), timeout=15.0)
+        data = json.loads(stdout.decode())
+        text = data["choices"][0]["message"]["content"]
+        import re
+        text = re.sub(r'<think>[\s\S]*?</think>', '', text).strip()
+        return text if len(text) > 1 else None
 
     async def _run_macro(self, command: VoiceCommand) -> CommandResult:
         result = await self.automation.run(command)
