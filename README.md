@@ -18,8 +18,10 @@ Utilisateur (voix/texte)
     +---> [WhisperFlow] ---> Micro local → Whisper STT temps reel
                               |
                               +---> Wake word "Jarvis"
-                              +---> Commander (140 commandes locales)
-                              +---> Si inconnu → M1/qwen3-8b (LLM)
+                              +---> Commander (223 patterns, accent-normalized)
+                              +---> Si inconnu → cluster_race (M1 vs OL1)
+                              +---> Fallback M2/M3 si race echoue
+                              +---> Cowork dispatch (requetes systeme)
                               +---> TTS fr-FR-DeniseNeural (Edge TTS)
 ```
 
@@ -28,7 +30,7 @@ Utilisateur (voix/texte)
 | Composant | Role | Port/Config |
 |-----------|------|-------------|
 | **WhisperFlow** | STT temps reel (micro local) | Capture audio directe |
-| **JARVIS Commander** | 140 commandes vocales FR | Regex pattern matching |
+| **JARVIS Commander** | 223 patterns vocaux FR (accent-normalized) | Regex pattern matching |
 | **OpenClaw Gateway** | Orchestrateur IA + outils | ws://127.0.0.1:18789 |
 | **M1 (LM Studio)** | LLM qwen3-8b (46 tok/s) | http://127.0.0.1:1234 |
 | **OL1 (Ollama)** | Fallback rapide qwen3:1.7b | http://127.0.0.1:11434 |
@@ -187,7 +189,8 @@ whisperflow/
   jarvis/
     jarvis_server.py    # Point d'entree (micro → Whisper → JARVIS)
     jarvis_core.py      # Orchestrateur (Commander + Skills + M1 fallback)
-    commander.py        # Parseur commandes vocales (140 patterns)
+    commander.py        # Parseur commandes vocales (223 patterns, accent-normalized)
+    cluster_bridge.py   # Bridge cluster IA (M1/OL1 race + M2/M3 fallback + quality gate)
     config.py           # Configuration globale
     tts_engine.py       # TTS Edge/pyttsx3 avec nettoyage texte
     wake_word.py        # Detection "Jarvis" (exact + fuzzy)
@@ -210,18 +213,24 @@ whisperflow/
 ## Benchmark
 
 ```
-JARVIS BENCHMARK -- 100 cycles
-  Total: 100 | Success: 98/100 (98%) | Errors: 2 (timeout)
-  Score: 91.2/100 | Latence: 1.59s moyenne
+JARVIS BENCHMARK — 37 cycles (v2 — accent normalization + quality gate)
+  Total: 37 | Success: 37/37 (100%) | Errors: 0
+  Score: 95.3/100 | Avg Latency: 0.52s | Max: 2.82s
 
-  Agents: Commander=59 | OL1=36 | M1=3 | FAIL=2
+  Agents: Commander=25 | M1=0 | OL1=12 | FAIL=0
 
   Par categorie:
-    voice_commands      : 30/30 | Avg: 92.2/100
-    llm_questions       : 28/30 | Avg: 88.6/100
-    mixed_actions       : 26/26 | Avg: 94.4/100
-    edge_cases          : 14/14 | Avg: 88.6/100
+    voice_commands      : 10/10 | Avg: 95.0/100
+    llm_questions       : 10/10 | Avg: 95.5/100
+    mixed_actions       : 10/10 | Avg: 95.0/100
+    edge_cases          :  7/7  | Avg: 95.7/100
 ```
+
+Ameliorations v2:
+- **Accent normalization**: Commander comprend "mode dictee" et "dictee" (sans accent)
+- **Quality gate**: rejette les reponses contenant le system prompt (anti-regurgitation)
+- **M2/M3 fallback**: si M1+OL1 echouent, tente M2 (reasoning) puis M3
+- **Cowork dispatch**: requetes systeme (gpu, cpu, thermal...) routees en parallele vers cowork
 
 Lancer le benchmark:
 ```bash
