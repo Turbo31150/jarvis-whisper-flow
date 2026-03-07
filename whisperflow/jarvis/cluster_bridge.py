@@ -25,7 +25,7 @@ NODES = {
     "OL1": {
         "url": "http://127.0.0.1:11434/api/chat",
         "model": "qwen3:1.7b",
-        "timeout": 8,
+        "timeout": 12,
         "system": "Tu es JARVIS. Francais, concis.",
         "max_tokens": 200,
     },
