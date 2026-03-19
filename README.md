@@ -1,249 +1,441 @@
-# JARVIS WhisperFlow - Assistant Vocal Windows Complet
+# JARVIS Whisper-Flow — Complete Voice Assistant
 
-Systeme vocal temps reel base sur Whisper-Flow, integre avec OpenClaw (orchestrateur IA) et un cluster GPU local.
-
-## Architecture
-
-```
-Utilisateur (voix/texte)
-    |
-    +---> [Telegram] ---> OpenClaw Gateway (port 18789)
-    |                         |
-    |                         +---> M1/qwen3-8b (LM Studio, port 1234)
-    |                         +---> Outils: browser, exec, fichiers, cron...
-    |                         +---> TTS Denise (si vocal recu)
-    |                         |
-    |                         +---> Reponse texte + vocal Telegram
-    |
-    +---> [WhisperFlow] ---> Micro local → Whisper STT temps reel
-                              |
-                              +---> Wake word "Jarvis"
-                              +---> Commander (223 patterns, accent-normalized)
-                              +---> Si inconnu → cluster_race (M1 vs OL1)
-                              +---> Fallback M2/M3 si race echoue
-                              +---> Cowork dispatch (requetes systeme)
-                              +---> TTS fr-FR-DeniseNeural (Edge TTS)
-```
-
-## Composants
-
-| Composant | Role | Port/Config |
-|-----------|------|-------------|
-| **WhisperFlow** | STT temps reel (micro local) | Capture audio directe |
-| **JARVIS Commander** | 223 patterns vocaux FR (accent-normalized) | Regex pattern matching |
-| **OpenClaw Gateway** | Orchestrateur IA + outils | ws://127.0.0.1:18789 |
-| **M1 (LM Studio)** | LLM qwen3-8b (46 tok/s) | http://127.0.0.1:1234 |
-| **OL1 (Ollama)** | Fallback rapide qwen3:1.7b | http://127.0.0.1:11434 |
-| **TTS Engine** | Edge TTS fr-FR-DeniseNeural | Lecture locale + Telegram |
-| **Telegram Bot** | Interface mobile @turboSSebot | Via OpenClaw plugin |
-
-## Installation rapide (Windows)
-
-### Prerequis
-- Python 3.10+ avec pip
-- Node.js 20+ (pour OpenClaw)
-- LM Studio avec qwen3-8b charge
-- Micro fonctionnel
-
-### 1. Cloner et installer WhisperFlow
-
-```bash
-git clone https://github.com/Turbo31150/jarvis-whisper-flow.git
-cd jarvis-whisper-flow
-pip install -r requirements.txt
-```
-
-### 2. Installer OpenClaw
-
-```bash
-npm install -g openclaw
-openclaw doctor
-```
-
-### 3. Configurer OpenClaw
-
-```bash
-# Modele principal: M1 local
-openclaw config set agents.defaults.model.primary "lm-m1/qwen3-8b"
-
-# Activer Telegram
-openclaw plugins enable telegram
-openclaw channels add --channel telegram --token "VOTRE_BOT_TOKEN"
-
-# Workspace JARVIS cowork
-openclaw config set agents.defaults.workspace "F:/BUREAU/jarvis-cowork"
-```
-
-Ajouter le provider M1 dans `~/.openclaw/openclaw.json` :
-
-```json
-{
-  "models": {
-    "providers": {
-      "lm-m1": {
-        "baseUrl": "http://127.0.0.1:1234/v1",
-        "api": "openai-completions",
-        "models": [{
-          "id": "qwen3-8b",
-          "name": "Qwen3 8B (M1 LOCAL)",
-          "reasoning": false,
-          "input": ["text"],
-          "contextWindow": 32768,
-          "cost": {"input": 0, "output": 0}
-        }]
-      }
-    }
-  }
-}
-```
-
-### 4. Lancer le systeme
-
-```bash
-# Terminal 1: OpenClaw Gateway
-openclaw gateway --port 18789
-
-# Terminal 2: WhisperFlow (ecoute micro)
-cd F:\BUREAU\jarvis-whisper-flow
-python -m whisperflow.jarvis
-```
-
-### 5. Tache planifiee Windows (demarrage auto)
-
-WhisperFlow se lance automatiquement au login via la tache `JARVIS_WhisperFlow`.
-
-Creation manuelle :
-```bash
-schtasks /Create /TN "JARVIS_WhisperFlow" /TR "cmd /C \"cd /d F:\\BUREAU\\jarvis-whisper-flow && pythonw -m whisperflow.jarvis\"" /SC ONLOGON /RL HIGHEST /F /DELAY 0000:30
-```
-
-## Commandes vocales (140+)
-
-Dites **"Jarvis"** suivi de la commande :
-
-### Applications
-- "Jarvis ouvre Chrome" / "Jarvis ferme Notepad"
-- "Jarvis lance le terminal" / "Jarvis ouvre Word"
-
-### Systeme
-- "Jarvis monte le volume" / "Jarvis volume a 50"
-- "Jarvis luminosite a 80" / "Jarvis batterie"
-- "Jarvis quelle heure" / "Jarvis quel jour"
-
-### Web
-- "Jarvis google intelligence artificielle"
-- "Jarvis youtube tutoriel Python"
-- "Jarvis wikipedia machine learning"
-
-### Fichiers
-- "Jarvis cree un fichier test" / "Jarvis cherche rapport"
-- "Jarvis ouvre telechargements"
-
-### Dictee
-- "Jarvis mode dictee" (tout est tape au clavier)
-- "Arrete la dictee" (retour mode commande)
-
-### Questions libres (via M1/qwen3-8b)
-- "Jarvis c'est quoi le bitcoin"
-- "Jarvis explique le machine learning"
-- Toute question non reconnue comme commande locale
-
-## Integration OpenClaw + JARVIS Cowork
-
-OpenClaw utilise le workspace `jarvis-cowork` (438 scripts) pour :
-- Execution de scripts systeme (GPU, disque, reseau, processus...)
-- Trading (scan, signaux, backtests)
-- Dominos/pipelines (routine matin, scan complet, mode travail...)
-- Navigation browser (Comet/Chrome/Edge)
-- Gestion fenetres multi-ecrans
-
-### Scripts cowork disponibles via Telegram
-
-```
-/status    → Etat du systeme
-/health    → Health check cluster
-/gpu       → Temperatures GPU
-/trading   → Signaux trading
-/scan      → Scan marche crypto
-/domino    → Lancer un pipeline
-```
-
-## Configuration TTS
-
-Voix par defaut: `fr-FR-DeniseNeural` (Edge TTS, haute qualite).
-
-Le texte est nettoye avant lecture :
-- Pas de ponctuation, symboles, code blocks
-- Pas d'URLs ni de markdown
-- Lecture naturelle en francais
-
-Modifier dans `whisperflow/jarvis/config.py` :
-```python
-"tts_voice": "fr-FR-DeniseNeural"  # ou fr-FR-HenriNeural
-```
-
-## Fichiers cles
-
-```
-whisperflow/
-  jarvis/
-    jarvis_server.py    # Point d'entree (micro → Whisper → JARVIS)
-    jarvis_core.py      # Orchestrateur (Commander + Skills + M1 fallback)
-    commander.py        # Parseur commandes vocales (223 patterns, accent-normalized)
-    cluster_bridge.py   # Bridge cluster IA (M1/OL1 race + M2/M3 fallback + quality gate)
-    config.py           # Configuration globale
-    tts_engine.py       # TTS Edge/pyttsx3 avec nettoyage texte
-    wake_word.py        # Detection "Jarvis" (exact + fuzzy)
-    skills/             # 25+ skills (apps, systeme, fichiers, web, media...)
-    agents/             # 4 agents (dictation, search, automation, navigation)
-  streaming.py          # TranscribeSession (windowing audio)
-  transcriber.py        # Whisper model loading + transcription
-  audio/microphone.py   # Capture PyAudio 16kHz mono int16
-```
-
-## Cluster IA
-
-| Noeud | Host | Modele | Vitesse |
-|-------|------|--------|---------|
-| M1 | 127.0.0.1:1234 | qwen3-8b | 46 tok/s |
-| OL1 | 127.0.0.1:11434 | qwen3:1.7b | 84 tok/s |
-| M2 | 192.168.1.26:1234 | deepseek-r1 | 44 tok/s |
-| M3 | 192.168.1.113:1234 | deepseek-r1 | 33 tok/s |
-
-## Benchmark
-
-```
-JARVIS BENCHMARK — 37 cycles (v2 — accent normalization + quality gate)
-  Total: 37 | Success: 37/37 (100%) | Errors: 0
-  Score: 95.3/100 | Avg Latency: 0.52s | Max: 2.82s
-
-  Agents: Commander=25 | M1=0 | OL1=12 | FAIL=0
-
-  Par categorie:
-    voice_commands      : 10/10 | Avg: 95.0/100
-    llm_questions       : 10/10 | Avg: 95.5/100
-    mixed_actions       : 10/10 | Avg: 95.0/100
-    edge_cases          :  7/7  | Avg: 95.7/100
-```
-
-Ameliorations v2:
-- **Accent normalization**: Commander comprend "mode dictee" et "dictee" (sans accent)
-- **Quality gate**: rejette les reponses contenant le system prompt (anti-regurgitation)
-- **M2/M3 fallback**: si M1+OL1 echouent, tente M2 (reasoning) puis M3
-- **Cowork dispatch**: requetes systeme (gpu, cpu, thermal...) routees en parallele vers cowork
-
-Lancer le benchmark:
-```bash
-python benchmark_telegram.py --cycles 100 --verbose
-```
-
-## Integration jarvis-cowork (395 scripts)
-
-Le repo [jarvis-cowork](https://github.com/Turbo31150/jarvis-cowork) ajoute 395 scripts autonomes:
-- `cluster_bridge.py` fait le lien via `cluster_race()` (M1 vs OL1, first wins)
-- Commandes non reconnues par Commander -> cluster LLM -> reponse vocale
-- Scripts cowork accessibles via MCP bridge (`cowork_mcp_bridge.py`)
-
-## Licence
-
-MIT
+> **EN** | [FR](#version-française)
+>
+> ![Python](https://img.shields.io/badge/python-3.11+-green)
+> ![Platform](https://img.shields.io/badge/platform-Windows-blue)
+> ![License](https://img.shields.io/badge/license-MIT-brightgreen)
+> ![Whisper](https://img.shields.io/badge/whisper-faster--whisper_large--v3-orange)
+>
+> Complete Windows voice assistant powered by Whisper-Flow — wake word detection, GPU-accelerated STT, multi-AI dispatch, and TTS response. Part of the [JARVIS ecosystem](https://github.com/Turbo31150/jarvis-linux).
+>
+> ---
+>
+> ## Table of Contents
+>
+> 1. [Overview](#overview)
+> 2. 2. [Architecture](#architecture)
+>    3. 3. [Features](#features)
+>       4. 4. [Voice Pipeline](#voice-pipeline)
+>          5. 5. [File Structure](#file-structure)
+>             6. 6. [Installation](#installation)
+>                7. 7. [Configuration](#configuration)
+>                   8. 8. [Usage](#usage)
+>                      9. 9. [Integration with JARVIS](#integration-with-jarvis)
+>                         10. 10. [Related Repos](#related-repos)
+>                             11. 11. [Version Française](#version-française)
+>                                
+>                                 12. ---
+>                                
+>                                 13. ## Overview
+>                                
+>                                 14. JARVIS Whisper-Flow is a complete voice assistant for Windows that integrates:
+> - **Wake word detection** via Porcupine (keyword: "Jarvis")
+> - - **Speech-to-Text** via faster-whisper (large-v3-turbo, GPU CUDA)
+>   - - **Multi-AI dispatch** to LM Studio, Ollama, Gemini, or Claude
+>     - - **Text-to-Speech** via edge-tts (fr-FR-DeniseNeural) or espeak-ng
+>       - - **WebSocket streaming** for real-time transcription
+>        
+>         - ---
+>
+> ## Architecture
+>
+> ```
+> Microphone (Windows sounddevice)
+>          |
+> [Porcupine Wake Word "Jarvis"]
+>     sensitivity: 0.6-0.7
+>     custom .ppn model
+>          |
+> [5s Audio Recording]
+>     16kHz, 16-bit, mono
+>          |
+> [WhisperFlow STT]
+>     faster-whisper large-v3-turbo
+>     GPU CUDA acceleration
+>          |
+> [Voice Correction]
+>     2,628 aliases (etoile.db)
+>     "play music" → "play_music"
+>          |
+> [Command Filter]
+>     WHITELIST: direct exec
+>     GREYLIST: user confirmation
+>     BLACKLIST: refused (rm -rf, etc.)
+>          |
+> [AI Dispatch]
+>     LM Studio (local GPU)
+>     Ollama (local/cloud)
+>     Gemini API
+>     Claude API
+>          |
+> [TTS Response]
+>     edge-tts fr-FR-DeniseNeural
+>     espeak-ng (offline fallback)
+>     Piper (if installed)
+>          |
+> Speaker (Windows audio)
+> ```
+>
+> ---
+>
+> ## Features
+>
+> - **Wake word**: "Jarvis" — Porcupine pvporcupine, sensitivity 0.6-0.7
+> - - **STT**: faster-whisper large-v3-turbo — GPU accelerated, French + English
+>   - - **Voice correction**: 2,628 aliases for phonetic matching
+>     - - **Security filter**: 3-level whitelist/greylist/blacklist
+>       - - **Multi-AI**: Routes to best available AI (local GPU first, cloud fallback)
+>         - - **TTS**: edge-tts (neural) or espeak-ng (offline)
+>           - - **Streaming**: Real-time WebSocket transcription
+>             - - **Windows native**: sounddevice, Windows audio, portable exe support
+>              
+>               - ---
+>
+> ## Voice Pipeline
+>
+> | Step | Component | File |
+> |------|-----------|------|
+> | 1. Wake word | Porcupine detection | `wakeword_porcupine.py` |
+> | 2. Recording | sounddevice 5s | `voice_engine.py` |
+> | 3. STT | faster-whisper CUDA | `transcriber.py` |
+> | 4. Correction | 2,628 alias lookup | `voice_correction.py` |
+> | 5. Filter | 3-level security | `command_filter.py` |
+> | 6. Dispatch | Multi-AI routing | `voice_hub.py` |
+> | 7. TTS | edge-tts / espeak | `tts_engine.py` |
+> | 8. Streaming | WebSocket real-time | `streaming.py` |
+>
+> ---
+>
+> ## File Structure
+>
+> ```
+> jarvis-whisper-flow/
+> ├── voice_engine.py          # Main voice pipeline (wake word + record + dispatch)
+> ├── voice_hub.py             # Flask server (/voice/audio, /voice/text, /voice/status)
+> ├── wakeword_porcupine.py    # Porcupine wake word detection
+> ├── command_filter.py        # Security filter (whitelist/greylist/blacklist)
+> ├── voice_correction.py      # Voice correction (2,415 lines, 2,628 aliases)
+> ├── tts_engine.py            # Text-to-Speech (espeak-ng / edge-tts)
+> ├── voice_commands.json      # Voice → MCP action mapping (140+ commands)
+> ├── transcriber.py           # Whisper transcription engine
+> ├── streaming.py             # WebSocket streaming (real-time)
+> ├── fast_server.py           # Fast HTTP server
+> ├── whisperflow_client.py    # WebSocket client (transcribe_file, transcribe_stream)
+> └── whisperflow_mcp.py       # MCP server (port 8082, 2 tools)
+> ```
+>
+> ---
+>
+> ## Installation
+>
+> ### Prerequisites
+> - Windows 10/11
+> - - Python 3.11+
+>   - - NVIDIA GPU (recommended) with CUDA drivers
+>     - - Picovoice account (free) for Porcupine wake word
+>       - - HuggingFace account for Whisper models
+>        
+>         - ```bash
+>           git clone https://github.com/Turbo31150/jarvis-whisper-flow.git
+>           cd jarvis-whisper-flow
+>
+>           pip install faster-whisper pvporcupine sounddevice edge-tts flask
+>           ```
+>
+> ---
+>
+> ## Configuration
+>
+> ```bash
+> # .env file
+> PV_ACCESS_KEY=your_picovoice_key    # Porcupine wake word
+> WAKEWORD_PATH=jarvis_windows.ppn    # Custom wake word model
+> HF_TOKEN=your_huggingface_token     # Whisper model download
+>
+> # Optional AI backends
+> LM_STUDIO_URL=http://127.0.0.1:1234
+> OLLAMA_URL=http://127.0.0.1:11434
+> ANTHROPIC_API_KEY=sk-ant-...
+> GEMINI_API_KEY=...
+> ```
+>
+> ---
+>
+> ## Usage
+>
+> ```bash
+> # Start full voice assistant
+> python voice_engine.py
+>
+> # Start voice hub (REST API)
+> python voice_hub.py
+> # → POST /voice/audio  (audio file)
+> # → POST /voice/text   (text command)
+> # → GET  /voice/status
+>
+> # Start STT streaming server
+> python fast_server.py
+>
+> # Transcribe a file
+> python whisperflow_client.py transcribe audio.wav
+>
+> # MCP server (port 8082)
+> python whisperflow_mcp.py
+> ```
+>
+> ### Voice Commands Examples
+> - *"Jarvis, what's the Bitcoin price?"*
+> - - *"Jarvis, run system health check"*
+>   - - *"Jarvis, open my trading dashboard"*
+>     - - *"Jarvis, what's the GPU temperature?"*
+>       - - *"Jarvis, stop all services"*
+>        
+>         - ---
+>
+> ## Integration with JARVIS
+>
+> When used with [jarvis-linux](https://github.com/Turbo31150/jarvis-linux):
+>
+> - **MCP tools**: `whisperflow_mcp.py` exposes `transcribe` and `status` tools (port 8082, Bearer `wf-jarvis-2026`)
+> - - **Docker**: `vocal-whisper` container (port 18001:8000)
+>   - - **Systemd**: `jarvis-voice.service` + `jarvis-whisper.service`
+>     - - **WebSocket**: Connects to `jarvis-ws :9742` for response streaming
+>       - - **Database**: Voice aliases stored in `etoile.db` (2,628 entries)
+>        
+>         - ---
+>
+> ## Related Repos
+>
+> | Repo | Description |
+> |------|-------------|
+> | [jarvis-linux](https://github.com/Turbo31150/jarvis-linux) | Main JARVIS repo — full Linux deployment |
+> | [JARVIS-CLUSTER](https://github.com/Turbo31150/JARVIS-CLUSTER) | Multi-node cluster infrastructure |
+> | [jarvis-cowork](https://github.com/Turbo31150/jarvis-cowork) | 249 autonomous development scripts |
+> | [gemini-live-trading-agent](https://github.com/Turbo31150/gemini-live-trading-agent) | Voice trading via Gemini Live |
+>
+> ---
+>
+> *Author: Turbo31150 | Platform: Windows | STT: faster-whisper large-v3-turbo | License: MIT | March 2026*
+>
+> ---
+> ---
+>
+> # Version Française
+>
+> > [EN](#jarvis-whisper-flow--complete-voice-assistant) | **FR**
+> >
+> > ![Python](https://img.shields.io/badge/python-3.11+-green)
+> > ![Plateforme](https://img.shields.io/badge/plateforme-Windows-blue)
+> > ![Licence](https://img.shields.io/badge/licence-MIT-brightgreen)
+> > ![Whisper](https://img.shields.io/badge/whisper-faster--whisper_large--v3-orange)
+> >
+> > Assistant vocal complet pour Windows basé sur Whisper-Flow — détection de mot-réveil, STT accéléré GPU, dispatch multi-IA, et réponse TTS. Fait partie de l'[écosystème JARVIS](https://github.com/Turbo31150/jarvis-linux).
+> >
+> > ---
+> >
+> > ## Table des matières FR
+> >
+> > 1. [Vue d'ensemble](#vue-densemble)
+> > 2. 2. [Architecture](#architecture-fr)
+> >    3. 3. [Fonctionnalités](#fonctionnalités)
+> >       4. 4. [Pipeline vocal](#pipeline-vocal-fr)
+> >          5. 5. [Structure des fichiers](#structure-des-fichiers)
+> >             6. 6. [Installation](#installation-fr)
+> >                7. 7. [Configuration](#configuration-fr)
+> >                   8. 8. [Utilisation](#utilisation-fr)
+> >                      9. 9. [Intégration avec JARVIS](#intégration-avec-jarvis-fr)
+> >                         10. 10. [Repos liés](#repos-liés-fr)
+> >                            
+> >                             11. ---
+> >                            
+> >                             12. ## Vue d'ensemble
+> >                            
+> >                             13. JARVIS Whisper-Flow est un assistant vocal complet pour Windows qui intègre :
+> > - **Détection de mot-réveil** via Porcupine (mot-clé : "Jarvis")
+> > - - **Reconnaissance vocale** via faster-whisper (large-v3-turbo, GPU CUDA)
+> >   - - **Dispatch multi-IA** vers LM Studio, Ollama, Gemini ou Claude
+> >     - - **Synthèse vocale** via edge-tts (fr-FR-DeniseNeural) ou espeak-ng
+> >       - - **Streaming WebSocket** pour transcription en temps réel
+> >        
+> >         - ---
+> >
+> > ## Architecture FR
+> >
+> > ```
+> > Microphone (Windows sounddevice)
+> >          |
+> > [Porcupine Wake Word "Jarvis"]
+> >     sensibilité : 0.6-0.7
+> >     modèle .ppn personnalisé
+> >          |
+> > [Enregistrement 5s]
+> >     16kHz, 16-bit, mono
+> >          |
+> > [WhisperFlow STT]
+> >     faster-whisper large-v3-turbo
+> >     accélération GPU CUDA
+> >          |
+> > [Correction Vocale]
+> >     2 628 alias (etoile.db)
+> >     "met la musique" → "play_music"
+> >          |
+> > [Filtre de Commandes]
+> >     WHITELIST : exec directe
+> >     GREYLIST  : confirmation utilisateur
+> >     BLACKLIST : refusé (rm -rf, etc.)
+> >          |
+> > [Dispatch IA]
+> >     LM Studio (GPU local)
+> >     Ollama (local/cloud)
+> >     Gemini API
+> >     Claude API
+> >          |
+> > [Réponse TTS]
+> >     edge-tts fr-FR-DeniseNeural
+> >     espeak-ng (fallback hors ligne)
+> >     Piper (si installé)
+> >          |
+> > Haut-parleur (audio Windows)
+> > ```
+> >
+> > ---
+> >
+> > ## Fonctionnalités
+> >
+> > - **Mot-réveil** : "Jarvis" — Porcupine pvporcupine, sensibilité 0.6-0.7
+> > - - **STT** : faster-whisper large-v3-turbo — GPU accéléré, Français + Anglais
+> >   - - **Correction vocale** : 2 628 alias pour correspondance phonétique
+> >     - - **Filtre de sécurité** : 3 niveaux whitelist/greylist/blacklist
+> >       - - **Multi-IA** : Route vers la meilleure IA disponible (GPU local en priorité, cloud en fallback)
+> >         - - **TTS** : edge-tts (neural) ou espeak-ng (hors ligne)
+> >           - - **Streaming** : Transcription WebSocket en temps réel
+> >             - - **Windows natif** : sounddevice, audio Windows, support exe portable
+> >              
+> >               - ---
+> >
+> > ## Pipeline vocal FR
+> >
+> > | Étape | Composant | Fichier |
+> > |-------|-----------|---------|
+> > | 1. Mot-réveil | Détection Porcupine | `wakeword_porcupine.py` |
+> > | 2. Enregistrement | sounddevice 5s | `voice_engine.py` |
+> > | 3. STT | faster-whisper CUDA | `transcriber.py` |
+> > | 4. Correction | Lookup 2 628 alias | `voice_correction.py` |
+> > | 5. Filtre | Sécurité 3 niveaux | `command_filter.py` |
+> > | 6. Dispatch | Routage multi-IA | `voice_hub.py` |
+> > | 7. TTS | edge-tts / espeak | `tts_engine.py` |
+> > | 8. Streaming | WebSocket temps réel | `streaming.py` |
+> >
+> > ---
+> >
+> > ## Structure des fichiers
+> >
+> > ```
+> > jarvis-whisper-flow/
+> > ├── voice_engine.py          # Pipeline vocal principal (wake word + record + dispatch)
+> > ├── voice_hub.py             # Serveur Flask (/voice/audio, /voice/text, /voice/status)
+> > ├── wakeword_porcupine.py    # Détection wake word Porcupine
+> > ├── command_filter.py        # Filtre sécurité (whitelist/greylist/blacklist)
+> > ├── voice_correction.py      # Correction vocale (2 415 lignes, 2 628 alias)
+> > ├── tts_engine.py            # Text-to-Speech (espeak-ng / edge-tts)
+> > ├── voice_commands.json      # Mapping voix → actions MCP (140+ commandes)
+> > ├── transcriber.py           # Moteur de transcription Whisper
+> > ├── streaming.py             # Streaming WebSocket (temps réel)
+> > ├── fast_server.py           # Serveur HTTP rapide
+> > ├── whisperflow_client.py    # Client WebSocket (transcribe_file, transcribe_stream)
+> > └── whisperflow_mcp.py       # Serveur MCP (port 8082, 2 outils)
+> > ```
+> >
+> > ---
+> >
+> > ## Installation FR
+> >
+> > ### Prérequis
+> > - Windows 10/11
+> > - - Python 3.11+
+> >   - - GPU NVIDIA (recommandé) avec drivers CUDA
+> >     - - Compte Picovoice (gratuit) pour le wake word Porcupine
+> >       - - Compte HuggingFace pour les modèles Whisper
+> >        
+> >         - ```bash
+> >           git clone https://github.com/Turbo31150/jarvis-whisper-flow.git
+> >           cd jarvis-whisper-flow
+> >
+> >           pip install faster-whisper pvporcupine sounddevice edge-tts flask
+> >           ```
+> >
+> > ---
+> >
+> > ## Configuration FR
+> >
+> > ```bash
+> > # Fichier .env
+> > PV_ACCESS_KEY=votre_cle_picovoice    # Wake word Porcupine
+> > WAKEWORD_PATH=jarvis_windows.ppn     # Modèle wake word personnalisé
+> > HF_TOKEN=votre_token_huggingface     # Téléchargement modèle Whisper
+> >
+> > # Backends IA optionnels
+> > LM_STUDIO_URL=http://127.0.0.1:1234
+> > OLLAMA_URL=http://127.0.0.1:11434
+> > ANTHROPIC_API_KEY=sk-ant-...
+> > GEMINI_API_KEY=...
+> > ```
+> >
+> > ---
+> >
+> > ## Utilisation FR
+> >
+> > ```bash
+> > # Démarrer l'assistant vocal complet
+> > python voice_engine.py
+> >
+> > # Démarrer le hub vocal (API REST)
+> > python voice_hub.py
+> > # → POST /voice/audio  (fichier audio)
+> > # → POST /voice/text   (commande texte)
+> > # → GET  /voice/status
+> >
+> > # Démarrer le serveur de streaming STT
+> > python fast_server.py
+> >
+> > # Transcrire un fichier
+> > python whisperflow_client.py transcribe audio.wav
+> >
+> > # Serveur MCP (port 8082)
+> > python whisperflow_mcp.py
+> > ```
+> >
+> > ### Exemples de commandes vocales
+> > - *"Jarvis, quel est le prix du Bitcoin ?"*
+> > - - *"Jarvis, lance le health check système"*
+> >   - - *"Jarvis, ouvre mon dashboard de trading"*
+> >     - - *"Jarvis, quelle est la température du GPU ?"*
+> >       - - *"Jarvis, arrête tous les services"*
+> >        
+> >         - ---
+> >
+> > ## Intégration avec JARVIS FR
+> >
+> > En utilisation avec [jarvis-linux](https://github.com/Turbo31150/jarvis-linux) :
+> >
+> > - **Outils MCP** : `whisperflow_mcp.py` expose `transcribe` et `status` (port 8082, Bearer `wf-jarvis-2026`)
+> > - - **Docker** : Conteneur `vocal-whisper` (port 18001:8000)
+> >   - - **Systemd** : `jarvis-voice.service` + `jarvis-whisper.service`
+> >     - - **WebSocket** : Se connecte à `jarvis-ws :9742` pour le streaming des réponses
+> >       - - **Base de données** : Alias vocaux stockés dans `etoile.db` (2 628 entrées)
+> >        
+> >         - ---
+> >
+> > ## Repos liés FR
+> >
+> > | Repo | Description |
+> > |------|-------------|
+> > | [jarvis-linux](https://github.com/Turbo31150/jarvis-linux) | Repo principal JARVIS — déploiement Linux complet |
+> > | [JARVIS-CLUSTER](https://github.com/Turbo31150/JARVIS-CLUSTER) | Infrastructure cluster multi-nœuds |
+> > | [jarvis-cowork](https://github.com/Turbo31150/jarvis-cowork) | 249 scripts de développement autonome |
+> > | [gemini-live-trading-agent](https://github.com/Turbo31150/gemini-live-trading-agent) | Trading vocal via Gemini Live |
+> >
+> > ---
+> >
+> > *Auteur : Turbo31150 | Plateforme : Windows | STT : faster-whisper large-v3-turbo | Licence : MIT | Mars 2026*
