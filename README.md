@@ -11,12 +11,12 @@
   [![JARVIS](https://img.shields.io/badge/JARVIS-Voice_Layer-22D3EE?style=flat-square)](#jarvis-integration)
 
   <br/>
-  <h3>Real-Time CUDA Voice Pipeline &mdash; Whisper large-v3 &bull; &lt;300ms Latency &bull; 26 Voice Skills</h3>
-  <p><em>The high-performance voice layer of the JARVIS ecosystem &mdash; transforms speech into AI-executed commands in under 300 milliseconds.</em></p>
+  <h3>Real-time voice AI pipeline with &lt;300ms latency on GPU</h3>
+  <p><em>The high-performance voice layer of the JARVIS ecosystem &mdash; transforms speech into AI-executed commands in under 300 milliseconds across 2,658+ processed commands.</em></p>
 
   <br/>
 
-  [Pipeline](#pipeline) &bull; [Skills](#skill-catalog) &bull; [Benchmarks](#benchmarks) &bull; [Installation](#installation) &bull; [JARVIS Integration](#jarvis-integration)
+  [Pipeline](#pipeline) &bull; [Skills](#skill-catalog) &bull; [Benchmarks](#benchmarks) &bull; [Installation](#installation) &bull; [Privacy](#privacy) &bull; [JARVIS Integration](#jarvis-integration)
 </div>
 
 ---
@@ -31,49 +31,42 @@ Say _"Jarvis"_, speak your command, and the system transcribes, interprets, and 
 
 ## Pipeline
 
+```mermaid
+flowchart TD
+    A["🎙️ Audio Input\nMicrophone capture"] --> B["🔇 Silero VAD\n< 50ms latency"]
+    B -->|Voice detected| C["🗣️ Wake Word Detection\n< 100ms latency"]
+    C -->|'Jarvis' confirmed| D["📦 Audio Buffer\nWebRTC 2-5s adaptive"]
+    D --> E["⚡ Whisper large-v3 CUDA\nfp16 inference < 300ms"]
+    E --> F["✏️ Post-Processing\nPunctuation + normalization"]
+    F --> G["🧠 NLU Intent Router\nWebSocket :9742"]
+    G --> H["🤖 JARVIS Command\n26 voice skills"]
+    H --> I["💬 Response Generation"]
+    I --> J["🔊 TTS Audio Output"]
+
+    style A fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
+    style E fill:#1e293b,stroke:#76b900,color:#e2e8f0
+    style G fill:#1e293b,stroke:#38bdf8,color:#e2e8f0
+    style H fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
+    style J fill:#1e293b,stroke:#22d3ee,color:#e2e8f0
 ```
-  +------------------+
-  |    Microphone     |    Continuous audio capture
-  +--------+---------+
-           |
-           v
-  +------------------+
-  |   Silero VAD     |    Voice Activity Detection
-  |   < 50ms         |    Filters silence, reduces GPU load
-  +--------+---------+
-           | voice detected
-           v
-  +------------------+
-  |  Wake Word       |    Listens for "Jarvis"
-  |  Detection       |    Configurable trigger phrase
-  |  < 100ms         |
-  +--------+---------+
-           | wake word confirmed
-           v
-  +------------------+
-  |  Audio Buffer    |    WebRTC-based buffering
-  |  2-5 seconds     |    Adaptive window sizing
-  +--------+---------+
-           |
-           v
-  +------------------+
-  |  Whisper         |    OpenAI Whisper large-v3
-  |  large-v3        |    CUDA fp16 inference
-  |  < 300ms (GPU)   |    Multilingual (fr/en)
-  +--------+---------+
-           | transcription
-           v
-  +------------------+
-  |  Post-Processing |    Punctuation restoration
-  |                  |    Text normalization
-  +--------+---------+
-           |
-           v
-  +------------------+
-  |  Intent Router   |    WebSocket :9742
-  |  -> JARVIS Core  |    Routes to 26 skills
-  +------------------+
-```
+
+---
+
+## Performance Metrics
+
+<div align="center">
+
+| Metric | Value |
+|:-------|------:|
+| **End-to-end latency** | **< 300ms** |
+| **Commands processed** | **2,658+** |
+| **Continuous uptime** | **72+ hours** |
+| **Word Error Rate (fr)** | **~2.5%** |
+| **Word Error Rate (en)** | **~2%** |
+| **Memory leaks** | **None detected** |
+| **GPU optimization** | **fp16 CUDA** |
+
+</div>
 
 ---
 
@@ -114,7 +107,7 @@ WhisperFlow routes voice commands to **26 built-in skills** via the JARVIS inten
 
 ## Benchmarks
 
-### Latency (RTX 3080 10GB)
+### Latency Breakdown (RTX 3080 10GB)
 
 | Component | Latency | Notes |
 |:----------|--------:|:------|
@@ -143,6 +136,20 @@ WhisperFlow routes voice commands to **26 built-in skills** via the JARVIS inten
 | Continuous uptime tested | 72+ hours |
 | Memory leak | None detected |
 | CPU fallback latency | ~1.5s (large-v3) |
+
+---
+
+## Privacy
+
+> **Your data stays local.**
+
+WhisperFlow is designed with privacy as a core principle:
+
+- **100% local inference** &mdash; Whisper runs on your GPU, no audio leaves your machine
+- **No cloud dependencies** &mdash; all processing happens on-device via CUDA
+- **No telemetry** &mdash; zero data collection, zero external API calls for transcription
+- **Air-gapped compatible** &mdash; works fully offline after initial model download
+- **Your voice, your hardware** &mdash; audio is processed in-memory and never written to disk unless you enable dictation logging
 
 ---
 
