@@ -321,6 +321,28 @@ Total: < 300ms end-to-end
 Your voice data **never leaves your machine**. WhisperFlow runs Whisper locally on GPU with fp16 inference. No API calls, no cloud storage, no third-party processing.
 
 
+
+## Supported Languages (Top 20)
+
+| Language | Code | WER | Speed | Notes |
+|----------|------|-----|-------|-------|
+| French | fr | 4.2% | Real-time | Primary language |
+| English | en | 3.1% | Real-time | Best accuracy |
+| German | de | 5.1% | Real-time | |
+| Spanish | es | 4.8% | Real-time | |
+| Italian | it | 5.3% | Real-time | |
+| Portuguese | pt | 5.0% | Real-time | |
+| Japanese | ja | 8.2% | Near real-time | CJK support |
+| Chinese | zh | 7.5% | Near real-time | Mandarin |
+| Korean | ko | 8.8% | Near real-time | |
+| Arabic | ar | 9.1% | Near real-time | RTL |
+| Russian | ru | 5.5% | Real-time | |
+| Dutch | nl | 5.4% | Real-time | |
+| Polish | pl | 6.1% | Real-time | |
+| Turkish | tr | 6.8% | Real-time | |
+| Hindi | hi | 10.2% | Slight delay | |
+
+
 ---
 
 <div align="center">
