@@ -1,6 +1,7 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python">
   <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="License">
+  <img src="https://github.com/Turbo31150/jarvis-whisper-flow/actions/workflows/docker-image.yml/badge.svg" alt="CI">
   <img src="https://img.shields.io/github/stars/Turbo31150/jarvis-whisper-flow?style=for-the-badge&color=yellow" alt="Stars">
   <img src="https://img.shields.io/badge/Platform-Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
   <img src="https://img.shields.io/badge/CUDA-Accelerated-76B900?style=for-the-badge&logo=nvidia&logoColor=white" alt="CUDA">
