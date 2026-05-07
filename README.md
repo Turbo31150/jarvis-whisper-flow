@@ -188,3 +188,26 @@ ruff check .
   Part of the <a href="https://github.com/Turbo31150/jarvis-linux"><strong>JARVIS OS</strong></a> ecosystem<br>
   <sub>Built with faster-whisper, CUDA, and zero cloud dependencies.</sub>
 </p>
+
+
+---
+
+<!-- jarvis-author-footer-v1 -->
+
+<div align="center">
+
+### Author
+
+**Franck Delmas** — AI Systems Architect · JARVIS OS Creator · Toulouse, France
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-franckdelmas.dev-00ffd1?style=flat-square)](https://franckdelmas.dev)
+[![GitHub](https://img.shields.io/badge/GitHub-Turbo31150-181717?style=flat-square&logo=github)](https://github.com/Turbo31150)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-franck--hlb-0077B5?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/franck-hlb-80bb231b1/)
+[![Hire](https://img.shields.io/badge/Status-Open%20to%20work-00ffd1?style=flat-square)](https://github.com/Turbo31150)
+
+*Production-first autodidact · Multi-agent · MCP early adopter · Available for CDI / freelance / consulting.*
+
+Part of the [JARVIS OS](https://github.com/Turbo31150/jarvis-linux) ecosystem ·
+[All 44 public repos](https://github.com/Turbo31150?tab=repositories)
+
+</div>
